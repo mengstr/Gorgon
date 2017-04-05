@@ -1,0 +1,225 @@
+;*****************************************************************************
+; Gorgon - A Defender-like game based on the 1981 Apple ][ game Gorgon
+;
+; Copyright 2017 Mats Engstrom, SmallRoomLabs. Licensed under the MIT license
+;*****************************************************************************
+
+;
+; Define standard ROM routines
+;
+CLRSCR	EQU 3503 	; $0D6B
+OPENCHN	EQU $1601 	;5633
+print	EQU $203C
+SETBRDR	EQU $229B 	;8859 Routine to set border color with A
+LASTK	EQU $5C08 	;23560 Location holding the last pressed key
+DF_SZ	EQU 23659
+DF_CC	EQU 23684 	; Address of next character location for print
+SLOWRAM	EQU $5DC0 	;24000 First usable location in slow ram
+FASTRAM	EQU $8000 	;32768 Start of the faster upper 32K ram
+
+BLACK	EQU 0
+BLUE	EQU 1
+RED	EQU 2
+MAGENTA	EQU 3
+GREEN	EQU 4
+CYAN	EQU 5
+YELLOW	EQU 6
+WHITE	EQU 7
+
+LASTLINE	EQU 191
+GROUNDHEIGHT	EQU 16
+SCOREHEIGHT	EQU 9
+GROUNDSTART	EQU LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
+NEXTGROUNDLINEOFFSET EQU 32*5
+
+	ORG $6000
+
+	include "align.Z80"
+	include "ytable.Z80"
+	include "ground.Z80"
+	include "fatfont.Z80"
+	include "score.Z80"
+
+
+Footer:
+	DB 22,1,0,'SCRE: ..... HISC:..... FUEL:....'
+Footer_: EQU $
+
+xpos	DW	1
+
+
+Start:
+	ld	A,BLUE
+	call	SETBRDR
+
+	ld	A,BLACK<<8+RED
+	ld	(23693),A 	; Set screen colours.
+
+	call	CLRSCR 		; clear the screen.
+
+	ld	A,253
+	call	OPENCHN
+
+	ld	DE,Footer 	; address of string
+	ld	BC,Footer_ - Footer ; length of string to print
+	call	8252 		; print our string
+
+	call	ResetScores
+
+Loop:
+	call	ScoreDisplayer
+
+	ld	BC,(xpos)
+	ld	A,C
+	and	%00000011
+	SRL	B		; Shift BC right by two bits (/4)
+	RR	C
+	SRL	B
+	RR	C
+
+	cp	0
+	jp	NZ,q1
+	ld	HL,Ground0ofs0
+q1	cp	1
+	jp	NZ,q2
+	ld	HL,Ground0ofs1
+q2	cp	2
+	jp	NZ,q3
+	ld	HL,Ground0ofs2
+q3	cp	3
+	jp	NZ,q4
+	ld	HL,Ground0ofs3
+q4
+	add	HL,BC
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+0))
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+1))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+2))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+3))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+4))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+5))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+6))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+7))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+8))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+9))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+10))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+11))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+12))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	DE,(RowLookup+2*(GROUNDSTART+13))
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+	ld	BC,32
+	ldir
+
+	ld	A,BLACK
+	call	SETBRDR
+	halt
+	halt
+	halt
+	halt
+	halt
+	ld	A,BLUE
+	call	SETBRDR
+	jp	Loop
+
+JallaBye:
+	halt
+	call	WaitForKey
+	ret
+
+;
+; Displays a number 0..9 from A
+;
+DispNum:
+	add	A,A 		; Multiply A by 8
+	add	A,A
+	add	A,A
+	ld	DE,FATFONT+$10*8 ; Address of digit 0 in charmap
+	add	A,E		; Add A*8 to the address to get to the
+	ld	E,A 		; correct offset of the requred digit
+
+	ld	B,8
+dn0	ld	A,(DE)		; Copy all 8 rows of the character map
+	inc	DE		; into to the screen memory
+	ld	(HL),A
+	inc	H
+	djnz	dn0
+	ret
+
+;
+;
+;
+WaitForKey:
+	ld	hl,LASTK	; LAST K system variable.
+	ld	(hl),0		; put null value there.
+wfk0	ld	a,(hl)		; new value of LAST K.
+	cp	0		; is it still zero?
+	jr	z,wfk0		; yes, so no key pressed.
+	ret			; key was pressed.
+
+
+
+	 END Start
