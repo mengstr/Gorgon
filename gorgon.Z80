@@ -8,14 +8,14 @@
 ; Define standard ROM routines
 ;
 CLRSCR	EQU 3503 	; $0D6B
-OPENCHN	EQU $1601 	;5633
+OPENCHN	EQU $1601 	; 5633
 print	EQU $203C
-SETBRDR	EQU $229B 	;8859 Routine to set border color with A
-LASTK	EQU $5C08 	;23560 Location holding the last pressed key
+SETBRDR	EQU $229B 	; 8859 Routine to set border color with A
+LASTK	EQU $5C08 	; 23560 Location holding the last pressed key
 DF_SZ	EQU 23659
 DF_CC	EQU 23684 	; Address of next character location for print
-SLOWRAM	EQU $5DC0 	;24000 First usable location in slow ram
-FASTRAM	EQU $8000 	;32768 Start of the faster upper 32K ram
+SLOWRAM	EQU $5DC0 	; 24000 First usable location in slow ram
+FASTRAM	EQU $8000 	; 32768 Start of the faster upper 32K ram
 
 BLACK	EQU 0
 BLUE	EQU 1
@@ -35,7 +35,7 @@ NEXTGROUNDLINEOFFSET EQU 32*5
 ;
 ;
 ;
-DRAWSHIP MACRO
+DRAW1SHIPLINE MACRO
 	ld	A,(BC)
 	ld	(HL),A
 	inc	HL
@@ -53,38 +53,30 @@ DRAWSHIP MACRO
 	inc	HL
 	inc	BC
 ENDM
-
-;
-;
-;
-MACRO DRAW1GROUNDLINEAT,myRow
-	ld	DE,myRow
-	ld	BC,32
-	ldir
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-ENDM
-
-	ORG $6000
 
 	include "align.Z80"
-	include "ytable.Z80"
-	include "grounddata.Z80"
-	include "shipdata.Z80"
+
+
+	ORG SLOWRAM
+	ALIGN	256
 	include "fatfont.Z80"
+
+	ORG FASTRAM
+	include "ytable.Z80"
+	include "shipdata.Z80"
 	include "score.Z80"
+	include "ground.Z80"
 
 
 Footer:
 	DB 22,1,0,'SCRE: ..... HISC:..... FUEL:....'
 Footer_: EQU $
 
-xpos	DW	256
-speed	DW	$FFFF
+holdL	DB	0
+holdH	DB	0
 
-Box1	DB $00,$00,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$00,$00,$00,$00,$FF,$FF,$FF,$FF,$00,$00
-Box2	DB $00,$00,$80,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$80,$00,$00,$01,$00,$00
-
+shipx	DW	128
+shipy	DW	0
 
 Start:
 	ld	A,BLACK
@@ -103,146 +95,134 @@ Start:
 	call	8252 		; print our string
 
 	call	ResetScores
-
-	ld	DE,Row0		; Draw boxes for screen overview & lives
-	ld	HL,Box1
-	ld	BC,32
-	ldir
-
-	ld	DE,Row1
-	ld	HL,Box2
-	ld	BC,32
-	ldir
-
-	ld	DE,Row25
-	ld	HL,Box2
-	ld	BC,32
-	ldir
-
-	ld	DE,Row26
-	ld	HL,Box1
-	ld	BC,32
-	ldir
-
+	call	DrawTopBoxes
+	call	DrawGroundMap
+	call	DrawRemainingShips
 
 Loop:
-
-	ld	BC,shipR4
-	ld	HL,Row2+26
-	DRAWSHIP
-	ld	HL,Row3+26
-	DRAWSHIP
-	ld	HL,Row4+26
-	DRAWSHIP
-	ld	HL,Row5+26
-	DRAWSHIP
-	ld	HL,Row6+26
-	DRAWSHIP
-	ld	HL,Row7+26
-	DRAWSHIP
-
-	ld	BC,shipR4
-	ld	HL,Row10+26
-	DRAWSHIP
-	ld	HL,Row11+26
-	DRAWSHIP
-	ld	HL,Row12+26
-	DRAWSHIP
-	ld	HL,Row13+26
-	DRAWSHIP
-	ld	HL,Row14+26
-	DRAWSHIP
-	ld	HL,Row15+26
-	DRAWSHIP
-
-	ld	BC,shipR4
-	ld	HL,Row18+26
-	DRAWSHIP
-	ld	HL,Row19+26
-	DRAWSHIP
-	ld	HL,Row20+26
-	DRAWSHIP
-	ld	HL,Row21+26
-	DRAWSHIP
-	ld	HL,Row22+26
-	DRAWSHIP
-	ld	HL,Row23+26
-	DRAWSHIP
-
-
 	call	ScoreDisplayer
+	call	DrawGround
 
-	ld	BC,(xpos)
-	ld	A,C
-	and	%00000011
-	srl	B		; The lower two bits is used to select one of
-	rr	C		; four different pre-shifted ground images so
-	srl	B		; we need to shift BC right by two bits (/4)
-	rr	C		; to use for the bytes offset into the ground
-
-	cp	0		; Select the right pre-shifted ground table
-	jp	NZ,gofs1	; according to A (the two LSB of xpos)
-	ld	HL,Ground0ofs0
-gofs1	cp	1
-	jp	NZ,gofs2
-	ld	HL,Ground0ofs1
-gofs2	cp	2
-	jp	NZ,gofs3
-	ld	HL,Ground0ofs2
-gofs3	cp	3
-	jp	NZ,gofs4
-	ld	HL,Ground0ofs3
-gofs4
-
-	add	HL,BC		; Add byte-offset to the address of the
-				; selected ground table
-
-	; ld	DE,Row166
-	; ld	BC,32
-	; ldir
-
-	DRAW1GROUNDLINEAT Row166
-	DRAW1GROUNDLINEAT Row167
-	DRAW1GROUNDLINEAT Row168
-	DRAW1GROUNDLINEAT Row169
-	DRAW1GROUNDLINEAT Row170
-	DRAW1GROUNDLINEAT Row171
-	DRAW1GROUNDLINEAT Row172
-	DRAW1GROUNDLINEAT Row173
-	DRAW1GROUNDLINEAT Row174
-	DRAW1GROUNDLINEAT Row175
-	DRAW1GROUNDLINEAT Row176
-	DRAW1GROUNDLINEAT Row177
-	DRAW1GROUNDLINEAT Row178
-	DRAW1GROUNDLINEAT Row179
-
-	ld	BC,(speed)		; Update scroll location of ground
-	ld	HL,(xpos)		; according to speed
+	;
+	; Calculate the 6 starting addresses on the screen according to
+	; shipx and shipy variables.
+	ld	BC,0
+	ld	A,(shipy)
+	ld	C,A
+	ld	HL,RowLookup+56	; Offset down into the playfield
 	add	HL,BC
+	add	HL,BC
+	ex	DE,HL		; DE=Sereen line starting addresses
 
-	ld	A,H			; Did we pass the left edge?
-	cp	$FF
-	jp	Z,acrossLeftEdge	; Yes, then fixup xpos
+	ld	BC,(shipx)	; BC=shipx/8 for byte offset
+	srl	B
+	rr	C
+	srl	B
+	rr	C
+	srl	B
+	rr	C
 
-	ld	BC,5*128		; Did we pass the right edge?
-	or 	A
-	sbc 	HL,BC
-	add 	HL,BC
-	jp	C,doneScrolling		; Nope - we're done here
+	ld	A,(DE)	;	0
+	ld	L,A
+	inc	DE
+	ld	A,(DE)
+	ld	H,A
+	inc	DE
+	add	HL,BC
+	push	HL
 
-acrossRightEdge:
-	ld	BC,5*128		; Passed by the right edge, so backup
-	or	A			; so we can continue scrolling
-	sbc	HL,BC
-	jp	doneScrolling
 
-acrossLeftEdge:
- 	ld	BC,128*5		; We're negative, so jump forward to
-	add	HL,BC			; the end so we can continue
+	ld	A,(DE)	;	1
+	ld	L,A
+	inc	DE
+	ld	A,(DE)
+	ld	H,A
+	inc	DE
+	add	HL,BC
+	push	HL
 
-doneScrolling:
-	ld	(xpos),HL		; Set xpos to the updated location
 
+	ld	A,(DE)	;	2
+	ld	L,A
+	inc	DE
+	ld	A,(DE)
+	ld	H,A
+	inc	DE
+	add	HL,BC
+	push	HL
+
+	ld	A,(DE)	;	3
+	ld	L,A
+	inc	DE
+	ld	A,(DE)
+	ld	H,A
+	inc	DE
+	add	HL,BC
+	push	HL
+
+	ld	A,(DE)	;	4
+	ld	L,A
+	inc	DE
+	ld	A,(DE)
+	ld	H,A
+	inc	DE
+	add	HL,BC
+	push	HL
+
+	ld	A,(DE)	;	5
+	ld	L,A
+	inc	DE
+	ld	A,(DE)
+	ld	H,A
+	inc	DE
+	add	HL,BC
+	push	HL
+
+	;
+	; Calculate the address of the correct ship image according
+	; to the 3 LSB of the shipx variable
+	;
+	ld	A,(shipx)
+	and	%00000111
+	add	A,A
+	ld	DE,shipLutL
+	add	A,E
+	ld	E,A
+	ld	A,(DE)
+	ld	L,A		; The address should end up
+	inc	DE		; in HL
+	ld	A,(DE)
+	ld	H,A
+
+	;
+	; Start drawing the six lines of the selected ship at
+	; the six addresses pushed to the stack earlier
+	;
+	ld	BC,4
+	pop	DE
+	ldir
+	ld	BC,4
+	pop	DE
+	ldir
+	ld	BC,4
+	pop	DE
+	ldir
+	ld	BC,4
+	pop	DE
+	ldir
+	ld	BC,4
+	pop	DE
+	ldir
+	ld	BC,4
+	pop	DE
+	ldir
+
+	ld	HL,shipy
+	ld	A,(shipy)
+	cp	150
+	jp	Z,L3
+	inc	(HL)
+L3
 
 	ld	A,BLACK
 	call	SETBRDR
@@ -287,5 +267,81 @@ wfk0	ld	a,(hl)		; new value of LAST K.
 	ret			; key was pressed.
 
 
+;
+;
+;
+DrawRemainingShips:
+	ld	BC,shipR4
+	ld	HL,Row2+26
+	DRAW1SHIPLINE
+	ld	HL,Row3+26
+	DRAW1SHIPLINE
+	ld	HL,Row4+26
+	DRAW1SHIPLINE
+	ld	HL,Row5+26
+	DRAW1SHIPLINE
+	ld	HL,Row6+26
+	DRAW1SHIPLINE
+	ld	HL,Row7+26
+	DRAW1SHIPLINE
+
+	ld	BC,shipR4
+	ld	HL,Row10+26
+	DRAW1SHIPLINE
+	ld	HL,Row11+26
+	DRAW1SHIPLINE
+	ld	HL,Row12+26
+	DRAW1SHIPLINE
+	ld	HL,Row13+26
+	DRAW1SHIPLINE
+	ld	HL,Row14+26
+	DRAW1SHIPLINE
+	ld	HL,Row15+26
+	DRAW1SHIPLINE
+
+	ld	BC,shipR4
+	ld	HL,Row18+26
+	DRAW1SHIPLINE
+	ld	HL,Row19+26
+	DRAW1SHIPLINE
+	ld	HL,Row20+26
+	DRAW1SHIPLINE
+	ld	HL,Row21+26
+	DRAW1SHIPLINE
+	ld	HL,Row22+26
+	DRAW1SHIPLINE
+	ld	HL,Row23+26
+	DRAW1SHIPLINE
+
+	ret
+
+	;
+	; Draw boxes for screen overview & lives
+	;
+Box1	DB $00,$00,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$00,$00,$00,$00,$FF,$FF,$FF,$FF,$00,$00
+Box2	DB $00,$00,$80,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$80,$00,$00,$01,$00,$00
+
+DrawTopBoxes:
+	ld	DE,Row0
+	ld	HL,Box1
+	ld	BC,32
+	ldir
+
+	ld	DE,Row1
+	ld	HL,Box2
+	ld	BC,32
+	ldir
+
+	ld	DE,Row25
+	ld	HL,Box2
+	ld	BC,32
+	ldir
+
+	ld	DE,Row26
+	ld	HL,Box1
+	ld	BC,32
+	ldir
+
+	ret
 
 	 END Start

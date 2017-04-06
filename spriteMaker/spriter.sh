@@ -97,7 +97,7 @@ for offset in {0..7}
 do
 	# Process the whole file with the current offset
 	echo $name$offset:
-	cat $1 | tr -cd '*.\n' | while read line
+	tac $1 | tr -cd '*.\n' | while read line
 	do
 		# check if line length is a multiple of 8 characters
 		len=${#line}
