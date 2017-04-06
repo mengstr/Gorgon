@@ -32,11 +32,45 @@ SCOREHEIGHT	EQU 9
 GROUNDSTART	EQU LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
 NEXTGROUNDLINEOFFSET EQU 32*5
 
+;
+;
+;
+DRAWSHIP MACRO
+	ld	A,(BC)
+	ld	(HL),A
+	inc	HL
+	inc	BC
+	ld	A,(BC)
+	ld	(HL),A
+	inc	HL
+	inc	BC
+	ld	A,(BC)
+	ld	(HL),A
+	inc	HL
+	inc	BC
+	ld	A,(BC)
+	ld	(HL),A
+	inc	HL
+	inc	BC
+ENDM
+
+;
+;
+;
+MACRO DRAW1GROUNDLINEAT,myRow
+	ld	DE,myRow
+	ld	BC,32
+	ldir
+	ld	BC,NEXTGROUNDLINEOFFSET
+	add	HL,BC
+ENDM
+
 	ORG $6000
 
 	include "align.Z80"
 	include "ytable.Z80"
-	include "ground.Z80"
+	include "grounddata.Z80"
+	include "shipdata.Z80"
 	include "fatfont.Z80"
 	include "score.Z80"
 
@@ -45,14 +79,18 @@ Footer:
 	DB 22,1,0,'SCRE: ..... HISC:..... FUEL:....'
 Footer_: EQU $
 
-xpos	DW	1
+xpos	DW	256
+speed	DW	$FFFF
+
+Box1	DB $00,$00,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$00,$00,$00,$00,$FF,$FF,$FF,$FF,$00,$00
+Box2	DB $00,$00,$80,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$80,$00,$00,$01,$00,$00
 
 
 Start:
-	ld	A,BLUE
+	ld	A,BLACK
 	call	SETBRDR
 
-	ld	A,BLACK<<8+RED
+	ld	A,RED<<8+WHITE
 	ld	(23693),A 	; Set screen colours.
 
 	call	CLRSCR 		; clear the screen.
@@ -66,122 +104,150 @@ Start:
 
 	call	ResetScores
 
+	ld	DE,Row0		; Draw boxes for screen overview & lives
+	ld	HL,Box1
+	ld	BC,32
+	ldir
+
+	ld	DE,Row1
+	ld	HL,Box2
+	ld	BC,32
+	ldir
+
+	ld	DE,Row25
+	ld	HL,Box2
+	ld	BC,32
+	ldir
+
+	ld	DE,Row26
+	ld	HL,Box1
+	ld	BC,32
+	ldir
+
+
 Loop:
+
+	ld	BC,shipR4
+	ld	HL,Row2+26
+	DRAWSHIP
+	ld	HL,Row3+26
+	DRAWSHIP
+	ld	HL,Row4+26
+	DRAWSHIP
+	ld	HL,Row5+26
+	DRAWSHIP
+	ld	HL,Row6+26
+	DRAWSHIP
+	ld	HL,Row7+26
+	DRAWSHIP
+
+	ld	BC,shipR4
+	ld	HL,Row10+26
+	DRAWSHIP
+	ld	HL,Row11+26
+	DRAWSHIP
+	ld	HL,Row12+26
+	DRAWSHIP
+	ld	HL,Row13+26
+	DRAWSHIP
+	ld	HL,Row14+26
+	DRAWSHIP
+	ld	HL,Row15+26
+	DRAWSHIP
+
+	ld	BC,shipR4
+	ld	HL,Row18+26
+	DRAWSHIP
+	ld	HL,Row19+26
+	DRAWSHIP
+	ld	HL,Row20+26
+	DRAWSHIP
+	ld	HL,Row21+26
+	DRAWSHIP
+	ld	HL,Row22+26
+	DRAWSHIP
+	ld	HL,Row23+26
+	DRAWSHIP
+
+
 	call	ScoreDisplayer
 
 	ld	BC,(xpos)
 	ld	A,C
 	and	%00000011
-	SRL	B		; Shift BC right by two bits (/4)
-	RR	C
-	SRL	B
-	RR	C
+	srl	B		; The lower two bits is used to select one of
+	rr	C		; four different pre-shifted ground images so
+	srl	B		; we need to shift BC right by two bits (/4)
+	rr	C		; to use for the bytes offset into the ground
 
-	cp	0
-	jp	NZ,q1
+	cp	0		; Select the right pre-shifted ground table
+	jp	NZ,gofs1	; according to A (the two LSB of xpos)
 	ld	HL,Ground0ofs0
-q1	cp	1
-	jp	NZ,q2
+gofs1	cp	1
+	jp	NZ,gofs2
 	ld	HL,Ground0ofs1
-q2	cp	2
-	jp	NZ,q3
+gofs2	cp	2
+	jp	NZ,gofs3
 	ld	HL,Ground0ofs2
-q3	cp	3
-	jp	NZ,q4
+gofs3	cp	3
+	jp	NZ,gofs4
 	ld	HL,Ground0ofs3
-q4
+gofs4
+
+	add	HL,BC		; Add byte-offset to the address of the
+				; selected ground table
+
+	; ld	DE,Row166
+	; ld	BC,32
+	; ldir
+
+	DRAW1GROUNDLINEAT Row166
+	DRAW1GROUNDLINEAT Row167
+	DRAW1GROUNDLINEAT Row168
+	DRAW1GROUNDLINEAT Row169
+	DRAW1GROUNDLINEAT Row170
+	DRAW1GROUNDLINEAT Row171
+	DRAW1GROUNDLINEAT Row172
+	DRAW1GROUNDLINEAT Row173
+	DRAW1GROUNDLINEAT Row174
+	DRAW1GROUNDLINEAT Row175
+	DRAW1GROUNDLINEAT Row176
+	DRAW1GROUNDLINEAT Row177
+	DRAW1GROUNDLINEAT Row178
+	DRAW1GROUNDLINEAT Row179
+
+	ld	BC,(speed)		; Update scroll location of ground
+	ld	HL,(xpos)		; according to speed
 	add	HL,BC
 
-	ld	DE,(RowLookup+2*(GROUNDSTART+0))
-	ld	BC,32
-	ldir
+	ld	A,H			; Did we pass the left edge?
+	cp	$FF
+	jp	Z,acrossLeftEdge	; Yes, then fixup xpos
 
-	ld	DE,(RowLookup+2*(GROUNDSTART+1))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
+	ld	BC,5*128		; Did we pass the right edge?
+	or 	A
+	sbc 	HL,BC
+	add 	HL,BC
+	jp	C,doneScrolling		; Nope - we're done here
 
-	ld	DE,(RowLookup+2*(GROUNDSTART+2))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
+acrossRightEdge:
+	ld	BC,5*128		; Passed by the right edge, so backup
+	or	A			; so we can continue scrolling
+	sbc	HL,BC
+	jp	doneScrolling
 
-	ld	DE,(RowLookup+2*(GROUNDSTART+3))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
+acrossLeftEdge:
+ 	ld	BC,128*5		; We're negative, so jump forward to
+	add	HL,BC			; the end so we can continue
 
-	ld	DE,(RowLookup+2*(GROUNDSTART+4))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
+doneScrolling:
+	ld	(xpos),HL		; Set xpos to the updated location
 
-	ld	DE,(RowLookup+2*(GROUNDSTART+5))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
-
-	ld	DE,(RowLookup+2*(GROUNDSTART+6))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
-
-	ld	DE,(RowLookup+2*(GROUNDSTART+7))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
-
-	ld	DE,(RowLookup+2*(GROUNDSTART+8))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
-
-	ld	DE,(RowLookup+2*(GROUNDSTART+9))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
-
-	ld	DE,(RowLookup+2*(GROUNDSTART+10))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
-
-	ld	DE,(RowLookup+2*(GROUNDSTART+11))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
-
-	ld	DE,(RowLookup+2*(GROUNDSTART+12))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
-
-	ld	DE,(RowLookup+2*(GROUNDSTART+13))
-	ld	BC,NEXTGROUNDLINEOFFSET
-	add	HL,BC
-	ld	BC,32
-	ldir
 
 	ld	A,BLACK
 	call	SETBRDR
 	halt
-	halt
-	halt
-	halt
-	halt
-	ld	A,BLUE
+	ld	A,GREEN
 	call	SETBRDR
 	jp	Loop
 

@@ -17,3 +17,5 @@ https://bitbucket.org/grauw/pasmo/src?at=default
 file:///home/matseng/zx/Gorgon/createGround/index.html
 
 http://stevewetherill.com/blog/2014/02/09/crosswize-zx-spectrum-self-modifying-z80-code-and-the-stack-a-powerful-combo/
+
+http://www.chilliant.com/z80shift.html
