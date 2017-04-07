@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function bin2hex {
-	s=$1
+	s="$1"
 	case "${s:0:4}" in
 		'....') echo -n \$0
 		;;
@@ -77,9 +77,10 @@ function offsetstring {
 	line="$1"
 	steps=$2
 	len=$(( ${#line} - $steps ))
+	echo "line=$line len=$len" >> tmp.tmp
 	blank="........"
-	part1=${blank:0:$steps}
-	part2=${line:0:$len}
+	part1="${blank:0:$steps}"
+	part2="${line:0:$len}"
 	echo "$part1$part2"
 }
 
@@ -93,11 +94,23 @@ then
 	name="${name%.*}"
 fi
 
+reverse=$3
+
 for offset in {0..7} 
 do
 	# Process the whole file with the current offset
-	echo $name$offset:
-	tac $1 | tr -cd '*.\n' | while read line
+
+	# The label is first in each block if the data is normal and to
+	# be used with LDIR
+	if [ "$reverse" == "" ]
+	then
+		echo $name$offset:
+	fi
+
+	cat $1 > /tmp/spriter.tmp
+#	tac $1 > tmp/spriter.tmp
+
+	cat /tmp/spriter.tmp | tr -cd '*.\n' | while read line
 	do
 		# check if line length is a multiple of 8 characters
 		len=${#line}
@@ -113,14 +126,25 @@ do
 			continue
 		fi
 
+		orgline=$line
+		# if [ "$reverse" != "" ]
+		# then
+		# 	line=$(echo "$line" | rev)
+		# fi
+
 		# move sprite to the right X pixels 
-		line="$(offsetstring $line $offset)"
+		line="$(offsetstring "$line" $offset)"
 	
 		# process one line in 8 char (1 byte) chunks
 		echo -en "\t DB "
 		notfirst=0
 		echo "$line" | fold -b8 | while read byte
 		do
+			# if [ "$reverse" != "" ]
+			# then
+			# 	byte=$(echo "$byte" | rev)
+			# fi
+
 			hex=$(bin2hex "$byte")
 			if [ "$notfirst" == "0" ]
 			then
@@ -130,7 +154,25 @@ do
 			fi
 			echo -n "$hex"
 		done
-		echo  " ; $line"
+		echo  " ; $orgline $reverse"
 	done
+	# The label is last in each block if the data is normal and to
+	# be used with LDDR
+	if [ "$reverse" != "" ]
+	then
+		echo -e "$name$offset:\t\t; Label after data block in reverse"
+	fi
 	echo ""
 done
+
+echo ""
+if [ "$reverse" == "" ]
+then
+	echo ${name}LUT DW ${name}0,${name}1,${name}2,${name}3,${name}4,${name}5,${name}6,${name}7
+else
+	echo ${name}LUT DW ${name}0-1,${name}1-1,${name}2-1,${name}3-1,${name}4-1,${name}5-1,${name}6-1,${name}7-1
+fi
+echo ""
+
+
+rm /tmp/spriter.tmp

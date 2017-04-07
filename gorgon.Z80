@@ -66,6 +66,7 @@ ENDM
 	include "shipdata.Z80"
 	include "score.Z80"
 	include "ground.Z80"
+	include "key.Z80"
 
 
 Footer:
@@ -77,6 +78,8 @@ holdH	DB	0
 
 shipx	DW	128
 shipy	DW	0
+
+holdSP	DW	0
 
 Start:
 	ld	A,BLACK
@@ -99,7 +102,48 @@ Start:
 	call	DrawGroundMap
 	call	DrawRemainingShips
 
+
+
 Loop:
+	ld	BC,65022
+	in	A,(C)
+	bit	0,A
+	jp	Z,UpKey
+	ld	BC,65278
+	in	A,(C)
+	bit	1,A
+	jp	Z,DownKey
+	jp	NoKey1
+
+UpKey:
+	ld	HL,shipy
+	dec	(HL)
+	jp	NoKey1
+DownKey:
+	ld	HL,shipy
+	inc	(HL)
+	jp	NoKey1
+NoKey1
+
+	ld	BC,49150
+	in	A,(C)
+	bit	3,A
+	jp	Z,LeftKey
+	bit	2,A
+	jp	Z,RightKey
+	jp	NoKey2
+
+LeftKey:
+	ld	HL,shipx
+	dec	(HL)
+	jp	NoKey2
+RightKey:
+	ld	HL,shipx
+	inc	(HL)
+	jp	NoKey2
+
+
+NoKey2:
 	call	ScoreDisplayer
 	call	DrawGround
 
@@ -112,7 +156,7 @@ Loop:
 	ld	HL,RowLookup+56	; Offset down into the playfield
 	add	HL,BC
 	add	HL,BC
-	ex	DE,HL		; DE=Sereen line starting addresses
+	ex	DE,HL		; DE=Screen line starting addresses
 
 	ld	BC,(shipx)	; BC=shipx/8 for byte offset
 	srl	B
@@ -122,7 +166,8 @@ Loop:
 	srl	B
 	rr	C
 
-	ld	A,(DE)	;	0
+  REPT 6
+	ld	A,(DE)
 	ld	L,A
 	inc	DE
 	ld	A,(DE)
@@ -130,62 +175,15 @@ Loop:
 	inc	DE
 	add	HL,BC
 	push	HL
-
-
-	ld	A,(DE)	;	1
-	ld	L,A
-	inc	DE
-	ld	A,(DE)
-	ld	H,A
-	inc	DE
-	add	HL,BC
-	push	HL
-
-
-	ld	A,(DE)	;	2
-	ld	L,A
-	inc	DE
-	ld	A,(DE)
-	ld	H,A
-	inc	DE
-	add	HL,BC
-	push	HL
-
-	ld	A,(DE)	;	3
-	ld	L,A
-	inc	DE
-	ld	A,(DE)
-	ld	H,A
-	inc	DE
-	add	HL,BC
-	push	HL
-
-	ld	A,(DE)	;	4
-	ld	L,A
-	inc	DE
-	ld	A,(DE)
-	ld	H,A
-	inc	DE
-	add	HL,BC
-	push	HL
-
-	ld	A,(DE)	;	5
-	ld	L,A
-	inc	DE
-	ld	A,(DE)
-	ld	H,A
-	inc	DE
-	add	HL,BC
-	push	HL
-
-	;
+  ENDM
+ 	;
 	; Calculate the address of the correct ship image according
 	; to the 3 LSB of the shipx variable
 	;
 	ld	A,(shipx)
 	and	%00000111
 	add	A,A
-	ld	DE,shipLutL
+	ld	DE,shipRLUT
 	add	A,E
 	ld	E,A
 	ld	A,(DE)
@@ -194,34 +192,39 @@ Loop:
 	ld	A,(DE)
 	ld	H,A
 
+
 	;
-	; Start drawing the six lines of the selected ship at
+	; Erase the 6 lines of the old ship from screen
+	;
+	ld	(holdSP),SP		; The eraser uses the SP, so save it
+	ld	BC,$0000		; first
+  REPT	6,V
+shp##V	ld	SP,$FFFF
+	push	BC
+	push	BC
+  ENDM
+	ld	SP,(holdSP)		; Restore the SP after eraser
+
+	;
+	; Draw the six lines of the selected ship at
 	; the six addresses pushed to the stack earlier
 	;
+  REPT	6,V
 	ld	BC,4
 	pop	DE
-	ldir
-	ld	BC,4
-	pop	DE
-	ldir
-	ld	BC,4
-	pop	DE
-	ldir
-	ld	BC,4
-	pop	DE
-	ldir
-	ld	BC,4
-	pop	DE
-	ldir
-	ld	BC,4
-	pop	DE
-	ldir
+	ld	A,E
+	inc	A
+	ld	(shp##V + 1),A
+	ld	A,D
+	ld	(shp##V + 2),A
+	lddr
+  ENDM
 
 	ld	HL,shipy
 	ld	A,(shipy)
 	cp	150
 	jp	Z,L3
-	inc	(HL)
+;	inc	(HL)
 L3
 
 	ld	A,BLACK
@@ -343,5 +346,6 @@ DrawTopBoxes:
 	ldir
 
 	ret
+
 
 	 END Start
