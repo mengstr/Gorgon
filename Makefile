@@ -9,7 +9,7 @@ EMUFLAGS= --late-timings --graphics-filter 2x --no-confirm-action
 
 INCLUDES = 	align.Z80 groundmapdata.Z80 key.Z80 \
 			shipdata.Z80 fatfont.Z80 grounddata.Z80 \
-			ground.Z80 score.Z80 ytable.Z80
+			ground.Z80 score.Z80 ytable.Z80 colors.Z80
 
 .PHONY:	all run assets clean fullclean
 
@@ -30,10 +30,14 @@ shipdata.Z80: assets/shipR.txt assets/shipL.txt
 	spriteMaker/spriter.sh assets/shipR.txt shipR reverse >> $@
 	spriteMaker/spriter.sh assets/shipL.txt shipL reverse >> $@
 
+colors.Z80:
+	@./createColorNames.sh > $@
+
 fullclean: 	clean
 	@touch shipdata.Z80
 	@rm shipdata.Z80
 
 clean:
-	@rm -rf *.tap *.tmp *.bin *.lst *~
-
+	@rm -rf *.tap *.tmp *.bin *.lst
+	@rm -f */*~
+	

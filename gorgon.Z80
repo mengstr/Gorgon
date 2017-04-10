@@ -14,17 +14,24 @@ SETBRDR	EQU $229B 	; 8859 Routine to set border color with A
 LASTK	EQU $5C08 	; 23560 Location holding the last pressed key
 DF_SZ	EQU 23659
 DF_CC	EQU 23684 	; Address of next character location for print
+SCREEN	EQU $4000
+ATTRIBS EQU $5800	; 5800..5B00=$400 locs. FL BL P2 P1 P0 I2 I1 I0
+
 SLOWRAM	EQU $5DC0 	; 24000 First usable location in slow ram
 FASTRAM	EQU $8000 	; 32768 Start of the faster upper 32K ram
 
-BLACK	EQU 0
-BLUE	EQU 1
-RED	EQU 2
-MAGENTA	EQU 3
-GREEN	EQU 4
-CYAN	EQU 5
-YELLOW	EQU 6
-WHITE	EQU 7
+BLACK	EQU 0		; BK
+BLUE	EQU 1		; BL
+RED	EQU 2		; RE
+MAGENTA	EQU 3		; MA
+GREEN	EQU 4		; GR
+CYAN	EQU 5		; CY
+YELLOW	EQU 6		; YL
+WHITE	EQU 7		; WH
+
+	include "colors.Z80"
+
+
 
 LASTLINE	EQU 191
 GROUNDHEIGHT	EQU 16
@@ -102,7 +109,10 @@ Start:
 	call	DrawGroundMap
 	call	DrawRemainingShips
 
-
+ REPT $400,V
+	ld	A, (YELLOW*8)+BLUE+(((V & 32) XOR ((V & 1) * 32)) * 2)
+	ld	(ATTRIBS+V),A
+ ENDM
 
 Loop:
 	ld	BC,65022

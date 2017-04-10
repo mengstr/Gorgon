@@ -19,3 +19,5 @@ file:///home/matseng/zx/Gorgon/createGround/index.html
 http://stevewetherill.com/blog/2014/02/09/crosswize-zx-spectrum-self-modifying-z80-code-and-the-stack-a-powerful-combo/
 
 http://www.chilliant.com/z80shift.html
+
+http://wikiti.brandonw.net/index.php?title=Z80_Optimization#Table_alignment
