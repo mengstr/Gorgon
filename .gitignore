@@ -11,3 +11,6 @@ tmp/
 
 # Created by the Makefile
 Makefile.tmp
+*.lst
+*.inc
+*.tap
