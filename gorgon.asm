@@ -16,65 +16,45 @@ DF_SZ	EQU 23659
 DF_CC	EQU 23684 	; Address of next character location for print
 SCREEN	EQU $4000
 ATTRIBS EQU $5800	; 5800..5B00=$400 locs. FL BL P2 P1 P0 I2 I1 I0
-
 SLOWRAM	EQU $5DC0 	; 24000 First usable location in slow ram
 FASTRAM	EQU $8000 	; 32768 Start of the faster upper 32K ram
 
+;
+; Color names
+;
 BLACK	EQU 0		; BK
 BLUE	EQU 1		; BL
-RED	EQU 2		; RE
+RED		EQU 2		; RE
 MAGENTA	EQU 3		; MA
 GREEN	EQU 4		; GR
 CYAN	EQU 5		; CY
 YELLOW	EQU 6		; YL
 WHITE	EQU 7		; WH
 
-	include "colors.inc"
+	include "colors.inc"	; INK/PAPER color combos
 
+;
+; Game constants and settings
+;
+CPUBORDER	EQU 	1		; 0=Disable, 1=Enable	
+MAXSHIPYSPEED EQU	4
 
-
-LASTLINE	EQU 191
-GROUNDHEIGHT	EQU 16
-SCOREHEIGHT	EQU 9
-GROUNDSTART	EQU LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
+LASTLINE	EQU 	191
+GROUNDHEIGHT EQU	16
+SCOREHEIGHT	EQU 	9
+GROUNDSTART	EQU 	LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
 NEXTGROUNDLINEOFFSET EQU 32*5
 
-;
-;
-;
-DRAW1SHIPLINE MACRO
-	ld	A,(BC)
-	ld	(HL),A
-	inc	HL
-	inc	BC
-	ld	A,(BC)
-	ld	(HL),A
-	inc	HL
-	inc	BC
-	ld	A,(BC)
-	ld	(HL),A
-	inc	HL
-	inc	BC
-	ld	A,(BC)
-	ld	(HL),A
-	inc	HL
-	inc	BC
-ENDM
-
 	include "align.asm"
-
 
 	ORG SLOWRAM
 	ALIGN	256
 	include "fatfont.asm"
-
-	ORG FASTRAM
 	include "ytable.asm"
-	include "shipdata.asm"
 	include "score.asm"
 	include "ground.asm"
+	include "ship.asm"
 	include "key.asm"
-
 
 Footer:
 	DB 22,1,0,'SCRE: ..... HISC:..... FUEL:....'
@@ -82,20 +62,24 @@ Footer_: EQU $
 
 holdL	DB	0
 holdH	DB	0
+shipdir	DB	0	;	0=Right, 1=Left
 
-shipx	DW	128
-shipy	DW	0
+shipx		DW	128
+shipy		DB	0
+shipyspeed	DB	0
 
 holdSP	DW	0
 
 Start:
-	ld	A,BLACK
+	call	CLRSCR 		; clear the screen.
+	ld		A,BLACK
 	call	SETBRDR
 
-	ld	A,RED<<8+WHITE
-	ld	(23693),A 	; Set screen colours.
-
-	call	CLRSCR 		; clear the screen.
+	ld	A,WhBK		; Fill the screen attributes
+ REPT $400,V
+;	ld	A, (YELLOW*8)+BLUE+(((V & 32) XOR ((V & 1) * 32)) * 2)
+	ld	(ATTRIBS+V),A
+ ENDM
 
 	ld	A,253
 	call	OPENCHN
@@ -109,145 +93,93 @@ Start:
 	call	DrawGroundMap
 	call	DrawRemainingShips
 
- REPT $400,V
-	ld	A, (YELLOW*8)+BLUE+(((V & 32) XOR ((V & 1) * 32)) * 2)
-	ld	(ATTRIBS+V),A
- ENDM
-
 Loop:
-	ld	BC,65022
+	;************************************************************************
+	; Read and handle keyboard presses
+	;************************************************************************
+	ld	BC,PORTga		; Test for UP/DOWN (A/Z) keys
 	in	A,(C)
-	bit	0,A
+	bit	KEYa,A
 	jp	Z,UpKey
-	ld	BC,65278
+	ld	BC,PORTvz
 	in	A,(C)
-	bit	1,A
+	bit	KEYz,A
 	jp	Z,DownKey
-	jp	NoKey1
+	jp	morekeys1
 
+	; UP key 'increses' the negative value to a max -15
 UpKey:
-	ld	HL,shipy
-	dec	(HL)
-	jp	NoKey1
+	ld	A,(shipyspeed)
+	dec	A
+	cp 	-MAXSHIPYSPEED
+	jp	NC,uk1
+	ld	A,-MAXSHIPYSPEED
+uk1	ld (shipyspeed),A
+	jp	morekeys1
+
+	; DOWN key increases the positive value to a max 15
 DownKey:
-	ld	HL,shipy
-	inc	(HL)
-	jp	NoKey1
-NoKey1
+	ld	A,(shipyspeed)
+	inc	A
+	cp 	MAXSHIPYSPEED
+	jp	C,dk2
+	ld	A,MAXSHIPYSPEED
+dk2	ld (shipyspeed),A
 
-	ld	BC,49150
+	; Now test for LEFT/RIGHT {J/K) keys
+morekeys1
+	ld	BC,PORThl
 	in	A,(C)
-	bit	3,A
+	bit	KEYj,A
 	jp	Z,LeftKey
-	bit	2,A
+	bit	KEYk,A
 	jp	Z,RightKey
-	jp	NoKey2
-
+	jp	morekeys2
 LeftKey:
+	ld	A,1
+	ld	(shipdir),A
 	ld	HL,shipx
 	dec	(HL)
-	jp	NoKey2
+	jp	morekeys2
 RightKey:
+	ld	A,0
+	ld	(shipdir),A
 	ld	HL,shipx
 	inc	(HL)
-	jp	NoKey2
 
+morekeys2:
 
-NoKey2:
 	call	ScoreDisplayer
 	call	DrawGround
+	call	DrawShip
 
-	;
-	; Calculate the 6 starting addresses on the screen according to
-	; shipx and shipy variables.
-	ld	BC,0
+	; Move ship vertically according to shipyspeed
 	ld	A,(shipy)
-	ld	C,A
-	ld	HL,RowLookup+56	; Offset down into the playfield
-	add	HL,BC
-	add	HL,BC
-	ex	DE,HL		; DE=Screen line starting addresses
+	ld	B,A
+	ld	A,(shipyspeed)
+	add	A,B
+	cp	230
+	jp	C,ydone1
+	ld	A,0
+	jp	ydone2
+ydone1
+	cp	140
+	jp	C,ydone2
+	ld	A,140
+ydone2	ld	(shipy),A
 
-	ld	BC,(shipx)	; BC=shipx/8 for byte offset
-	srl	B
-	rr	C
-	srl	B
-	rr	C
-	srl	B
-	rr	C
-
-  REPT 6
-	ld	A,(DE)
-	ld	L,A
-	inc	DE
-	ld	A,(DE)
-	ld	H,A
-	inc	DE
-	add	HL,BC
-	push	HL
-  ENDM
- 	;
-	; Calculate the address of the correct ship image according
-	; to the 3 LSB of the shipx variable
-	;
-	ld	A,(shipx)
-	and	%00000111
-	add	A,A
-	ld	DE,shipRLUT
-	add	A,E
-	ld	E,A
-	ld	A,(DE)
-	ld	L,A		; The address should end up
-	inc	DE		; in HL
-	ld	A,(DE)
-	ld	H,A
-
-
-	;
-	; Erase the 6 lines of the old ship from screen
-	;
-	ld	(holdSP),SP		; The eraser uses the SP, so save it
-	ld	BC,$0000		; first
-  REPT	6,V
-shp##V	ld	SP,$FFFF
-	push	BC
-	push	BC
-  ENDM
-	ld	SP,(holdSP)		; Restore the SP after eraser
-
-	;
-	; Draw the six lines of the selected ship at
-	; the six addresses pushed to the stack earlier
-	;
-  REPT	6,V
-	ld	BC,4
-	pop	DE
-	ld	A,E
-	inc	A
-	ld	(shp##V + 1),A
-	ld	A,D
-	ld	(shp##V + 2),A
-	lddr
-  ENDM
-
-	ld	HL,shipy
-	ld	A,(shipy)
-	cp	150
-	jp	Z,L3
-;	inc	(HL)
-L3
-
-	ld	A,BLACK
+ IF CPUBORDER=0
+ 	halt
+ ELSE
+	ld		A,BLACK
 	call	SETBRDR
-	halt
-	ld	A,GREEN
+	halt				
+	ld		A,BLUE
 	call	SETBRDR
-	jp	Loop
+ ENDIF
 
-JallaBye:
-	halt
-	call	WaitForKey
-	ret
+	jp		Loop
+
 
 ;
 ; Displays a number 0..9 from A
@@ -268,16 +200,6 @@ dn0	ld	A,(DE)		; Copy all 8 rows of the character map
 	djnz	dn0
 	ret
 
-;
-;
-;
-WaitForKey:
-	ld	hl,LASTK	; LAST K system variable.
-	ld	(hl),0		; put null value there.
-wfk0	ld	a,(hl)		; new value of LAST K.
-	cp	0		; is it still zero?
-	jr	z,wfk0		; yes, so no key pressed.
-	ret			; key was pressed.
 
 
 ;
