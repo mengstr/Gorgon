@@ -1,5 +1,5 @@
-	include "grounddata.Z80"
-	include "groundmapdata.Z80"
+	include "grounddata.inc"
+	include "groundmapdata.inc"
 
 ;
 ;

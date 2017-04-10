@@ -29,7 +29,7 @@ CYAN	EQU 5		; CY
 YELLOW	EQU 6		; YL
 WHITE	EQU 7		; WH
 
-	include "colors.Z80"
+	include "colors.inc"
 
 
 
@@ -61,19 +61,19 @@ DRAW1SHIPLINE MACRO
 	inc	BC
 ENDM
 
-	include "align.Z80"
+	include "align.asm"
 
 
 	ORG SLOWRAM
 	ALIGN	256
-	include "fatfont.Z80"
+	include "fatfont.asm"
 
 	ORG FASTRAM
-	include "ytable.Z80"
-	include "shipdata.Z80"
-	include "score.Z80"
-	include "ground.Z80"
-	include "key.Z80"
+	include "ytable.asm"
+	include "shipdata.asm"
+	include "score.asm"
+	include "ground.asm"
+	include "key.asm"
 
 
 Footer:

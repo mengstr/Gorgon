@@ -1,7 +1,6 @@
 #!/bin/bash
-touch $1.Z80
-rm $1.Z80
-cat $1 | ./wrap.sh | ./offset.sh 0 | ./convert.sh 0 >> $1.Z80
-cat $1 | ./wrap.sh | ./offset.sh 2 | ./convert.sh 1 >> $1.Z80
-cat $1 | ./wrap.sh | ./offset.sh 4 | ./convert.sh 2 >> $1.Z80
-cat $1 | ./wrap.sh | ./offset.sh 6 | ./convert.sh 3 >> $1.Z80
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cat $1 | $DIR/wrap.sh | $DIR/offset.sh 0 | $DIR/convert.sh 0 
+cat $1 | $DIR/wrap.sh | $DIR/offset.sh 2 | $DIR/convert.sh 1 
+cat $1 | $DIR/wrap.sh | $DIR/offset.sh 4 | $DIR/convert.sh 2 
+cat $1 | $DIR/wrap.sh | $DIR/offset.sh 6 | $DIR/convert.sh 3 
