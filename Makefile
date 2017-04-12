@@ -8,7 +8,7 @@ EMU	= fuse
 EMUFLAGS= --late-timings --graphics-filter 2x --no-confirm-action
 
 INCLUDES = \
-	align.asm \
+	macros.asm \
 	key.asm \
 	ground.asm \
 	score.asm \

@@ -24,7 +24,7 @@ FASTRAM	EQU $8000 	; 32768 Start of the faster upper 32K ram
 ;
 BLACK	EQU 0		; BK
 BLUE	EQU 1		; BL
-RED		EQU 2		; RE
+RED	EQU 2		; RE
 MAGENTA	EQU 3		; MA
 GREEN	EQU 4		; GR
 CYAN	EQU 5		; CY
@@ -36,16 +36,18 @@ WHITE	EQU 7		; WH
 ;
 ; Game constants and settings
 ;
-CPUBORDER	EQU 	1		; 0=Disable, 1=Enable	
-MAXSHIPYSPEED EQU	4
+CPUBORDER	EQU 	1		; 0=Disable, 1=Enable
+
+MAXSHIPYSPEED 	EQU	4
+MAXSHIPXSPEED 	EQU	16
 
 LASTLINE	EQU 	191
-GROUNDHEIGHT EQU	16
+GROUNDHEIGHT 	EQU	16
 SCOREHEIGHT	EQU 	9
 GROUNDSTART	EQU 	LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
 NEXTGROUNDLINEOFFSET EQU 32*5
 
-	include "align.asm"
+	include "macros.asm"
 
 	ORG SLOWRAM
 	ALIGN	256
@@ -60,19 +62,14 @@ Footer:
 	DB 22,1,0,'SCRE: ..... HISC:..... FUEL:....'
 Footer_: EQU $
 
-holdL	DB	0
-holdH	DB	0
-shipdir	DB	0	;	0=Right, 1=Left
-
-shipx		DW	128
-shipy		DB	0
-shipyspeed	DB	0
-
-holdSP	DW	0
+holdL		DB 0
+holdH		DB 0
+holdSP		DW 0
+fire		DB 0
 
 Start:
 	call	CLRSCR 		; clear the screen.
-	ld		A,BLACK
+	ld	A,BLACK
 	call	SETBRDR
 
 	ld	A,WhBK		; Fill the screen attributes
@@ -94,86 +91,18 @@ Start:
 	call	DrawRemainingShips
 
 Loop:
-	;************************************************************************
-	; Read and handle keyboard presses
-	;************************************************************************
-	ld	BC,PORTga		; Test for UP/DOWN (A/Z) keys
-	in	A,(C)
-	bit	KEYa,A
-	jp	Z,UpKey
-	ld	BC,PORTvz
-	in	A,(C)
-	bit	KEYz,A
-	jp	Z,DownKey
-	jp	morekeys1
-
-	; UP key 'increses' the negative value to a max -15
-UpKey:
-	ld	A,(shipyspeed)
-	dec	A
-	cp 	-MAXSHIPYSPEED
-	jp	NC,uk1
-	ld	A,-MAXSHIPYSPEED
-uk1	ld (shipyspeed),A
-	jp	morekeys1
-
-	; DOWN key increases the positive value to a max 15
-DownKey:
-	ld	A,(shipyspeed)
-	inc	A
-	cp 	MAXSHIPYSPEED
-	jp	C,dk2
-	ld	A,MAXSHIPYSPEED
-dk2	ld (shipyspeed),A
-
-	; Now test for LEFT/RIGHT {J/K) keys
-morekeys1
-	ld	BC,PORThl
-	in	A,(C)
-	bit	KEYj,A
-	jp	Z,LeftKey
-	bit	KEYk,A
-	jp	Z,RightKey
-	jp	morekeys2
-LeftKey:
-	ld	A,1
-	ld	(shipdir),A
-	ld	HL,shipx
-	dec	(HL)
-	jp	morekeys2
-RightKey:
-	ld	A,0
-	ld	(shipdir),A
-	ld	HL,shipx
-	inc	(HL)
-
-morekeys2:
-
+	call 	ReadKeys
 	call	ScoreDisplayer
 	call	DrawGround
 	call	DrawShip
-
-	; Move ship vertically according to shipyspeed
-	ld	A,(shipy)
-	ld	B,A
-	ld	A,(shipyspeed)
-	add	A,B
-	cp	230
-	jp	C,ydone1
-	ld	A,0
-	jp	ydone2
-ydone1
-	cp	140
-	jp	C,ydone2
-	ld	A,140
-ydone2	ld	(shipy),A
+	call	UpdateShipY
 
  IF CPUBORDER=0
  	halt
  ELSE
 	ld		A,BLACK
 	call	SETBRDR
-	halt				
+	halt
 	ld		A,BLUE
 	call	SETBRDR
  ENDIF

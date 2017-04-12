@@ -49,3 +49,76 @@ KEYc	EQU 3		; PORTvz
 KEYx	EQU 2		; PORTvz
 KEYz	EQU 1		; PORTvz
 KEYcap	EQU 0		; PORTvz
+
+
+;
+; Read and handle keyboard presses
+;
+ReadKeys:
+	; Test for thenUP/DOWN (A/Z) keys
+	ld	BC,PORTga
+	in	A,(C)
+	bit	KEYa,A
+	jp	Z,UpKey
+	ld	BC,PORTvz
+	in	A,(C)
+	bit	KEYz,A
+	jp	Z,DownKey
+	jp	morekeys1
+
+	; UP key 'increases' the negative value to max -MAXSHIPYSPEED
+UpKey:
+	ld	A,(rawShipYspeed)
+	dec	A
+	cp 	-MAXSHIPYSPEED
+	jp	NC,uk1
+	ld	A,-MAXSHIPYSPEED
+uk1	ld 	(rawShipYspeed),A
+	jp	morekeys1
+
+	; DOWN key increases the positive value to a max MAXSHIPYSPEED
+DownKey:
+	ld	A,(rawShipYspeed)
+	inc	A
+	cp 	MAXSHIPYSPEED
+	ld	A,MAXSHIPYSPEED
+dk2	ld 	(rawShipYspeed),A
+
+	; Now test for LEFT/RIGHT {J/K) keys
+morekeys1
+	ld	BC,PORThl
+	in	A,(C)
+	bit	KEYj,A
+	jp	Z,LeftKey
+	bit	KEYk,A
+	jp	Z,RightKey
+	jp	morekeys2
+
+LeftKey:
+	ld	A,1
+	ld	(shipdir),A
+	ld	HL,shipX
+	dec	(HL)
+	jp	morekeys2
+
+RightKey:
+	ld	A,0
+	ld	(shipdir),A
+	ld	HL,shipX
+	inc	(HL)
+
+morekeys2:
+	ld	BC,PORTbm
+	in	A,(C)
+	bit	KEYspa,A
+	jp	Z,FireKey
+	jp	noMoreKeys
+
+	; Currently the  fire key just sets a variable to $FF
+FireKey:
+	ld	A,$FF
+	ld 	(fire),A
+	jp	noMoreKeys
+
+noMoreKeys
+	ret
