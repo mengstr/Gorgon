@@ -4,12 +4,6 @@
 ;
 ;
 ;
-groundx		DW	0
-groundspeed	DW	0
-
-;
-;
-;
 MACRO DRAW1GROUNDLINEAT,myRow
 	ld	DE,myRow
 	ld	BC,32
@@ -24,7 +18,6 @@ ENDM
 	; according to the 2 LSB of groundx
 	;
 DrawGround:
-	ld	BC,(groundx)
 	ld	BC,(cameraX)
 
 	srl	B
@@ -102,37 +95,3 @@ DrawGroundMap:
 
 	ret
 
-
-
-
-
-;
-;
-;
-UpdateGroundLocation:
-	ld	BC,(groundspeed)	; Update scroll location of ground
-	ld	HL,(groundx)		; according to speed
-	add	HL,BC
-
-	ld	A,H			; Did we pass the left edge?
-	cp	$FF
-	jp	Z,acrossLeftEdge	; Yes, then fixup groundx
-
-	ld	BC,5*128		; Did we pass the right edge?
-	or 	A
-	sbc 	HL,BC
-	add 	HL,BC
-	jp	C,doneScrolling		; Nope - we're done here
-
-acrossRightEdge:
-	ld	BC,5*128		; Passed by the right edge, so backup
-	or	A			; so we can continue scrolling
-	sbc	HL,BC
-	jp	doneScrolling
-
-acrossLeftEdge:
- 	ld	BC,128*5		; We're negative, so jump forward to
-	add	HL,BC			; the end so we can continue
-
-doneScrolling:
-	ld	(groundx),HL		; Set groundx to the updated location

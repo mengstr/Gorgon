@@ -37,7 +37,7 @@ WHITE	EQU 7		; WH
 ; Game constants and settings
 ;
 
-;DEBUG		EQU	1
+DEBUG		EQU	1
 CPUBORDER	EQU 	1		; 0=Disable, 1=Enable
 XFRICTION	EQU	1		; Horizontal air-drag
 YFRICTION	EQU	1		; Vertical air-drag
@@ -100,16 +100,57 @@ Start:
 	call	DrawGroundMap
 	call	DrawRemainingShips
 
+	ld	HL,(shipX)
+	ld	(cameraX),HL
+
 Loop:
-	call 	ReadKeys
-	call	ScoreDisplayer
 	call	DrawGround
 	call	DrawShip
+	call 	ReadKeys
+	call	ScoreDisplayer
 	call	UpdateShipY
 	call	UpdateShipX
 
+	;
+	; If ship is moving to the left then the camera should not move
+	; until ship-camera>100. When this is true then camera=ship-100
+	;
+	; If ship is moving to the right then the camera should not move
+	; until camera-ship>100. When this is true then camera=ship+100
+	;
+	ld 	A,(shipXdir)
+	cp	0
+	jp	NZ,ShipIsGoingRight
+
 	ld	HL,(shipX)
+	ld	BC,(cameraX)
+	CLC
+	sbc	HL,BC
+	ld	A,L
+	cp	100
+	jp	C,FollowDone
+	ld	HL,(shipX)
+	ld	BC,100
+	CLC
+	sbc	HL,BC
 	ld	(cameraX),HL
+	jp	FollowDone
+
+ShipIsGoingRight:
+	ld	HL,(cameraX)
+	ld	BC,(shipX)
+	CLC
+	sbc	HL,BC
+	ld	A,L
+	cp	100
+	jp	C,FollowDone
+	ld	HL,(shipX)
+	ld	BC,100
+	add	HL,BC
+	ld	(cameraX),HL
+	jp	FollowDone
+
+FollowDone:
 
 IFDEF DEBUG
 	ld HL,(cameraX)
