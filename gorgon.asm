@@ -36,11 +36,15 @@ WHITE	EQU 7		; WH
 ;
 ; Game constants and settings
 ;
+
 CPUBORDER	EQU 	1		; 0=Disable, 1=Enable
+XFRICTION	EQU	1		; Horizontal air-drag
+YFRICTION	EQU	1		; Vertical air-drag
 
 MAXSHIPYSPEED 	EQU	24
-MAXSHIPXSPEED 	EQU	64
+MAXSHIPXSPEED 	EQU	32
 
+WORLDWIDTH	EQU	1280
 LASTLINE	EQU 	191
 GROUNDHEIGHT 	EQU	16
 SCOREHEIGHT	EQU 	9
@@ -66,6 +70,9 @@ holdL		DB 0
 holdH		DB 0
 holdSP		DW 0
 fire		DB 0
+
+cameraX		DW	WORLDWIDTH/2
+
 
 Start:
 	call	CLRSCR 		; clear the screen.
@@ -96,6 +103,10 @@ Loop:
 	call	DrawGround
 	call	DrawShip
 	call	UpdateShipY
+	call	UpdateShipX
+
+	ld	HL,(shipX)
+	ld	(cameraX),HL
 
  IF CPUBORDER=0
  	halt
@@ -106,12 +117,14 @@ Loop:
 	ld	A,BLUE
 	call	SETBRDR
  ENDIF
-
 	jp	Loop
 
 
+
+
+
 ;
-; Displays a number 0..9 from A
+; Displays a number 0..9 from A as location starting at HL
 ;
 DispNum:
 	add	A,A 		; Multiply A by 8
@@ -207,6 +220,10 @@ DrawTopBoxes:
 	ldir
 
 	ret
+
+
+
+
 
 
 	 END Start

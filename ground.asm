@@ -25,6 +25,8 @@ ENDM
 	;
 DrawGround:
 	ld	BC,(groundx)
+	ld	BC,(cameraX)
+
 	ld	A,C
 	and	%00000011
 	srl	B		; The lower two bits is used to select one of
@@ -64,33 +66,6 @@ gofs4
 	DRAW1GROUNDLINEAT Row178
 	DRAW1GROUNDLINEAT Row179
 
-	ld	BC,(groundspeed)	; Update scroll location of ground
-	ld	HL,(groundx)		; according to speed
-	add	HL,BC
-
-	ld	A,H			; Did we pass the left edge?
-	cp	$FF
-	jp	Z,acrossLeftEdge	; Yes, then fixup groundx
-
-	ld	BC,5*128		; Did we pass the right edge?
-	or 	A
-	sbc 	HL,BC
-	add 	HL,BC
-	jp	C,doneScrolling		; Nope - we're done here
-
-acrossRightEdge:
-	ld	BC,5*128		; Passed by the right edge, so backup
-	or	A			; so we can continue scrolling
-	sbc	HL,BC
-	jp	doneScrolling
-
-acrossLeftEdge:
- 	ld	BC,128*5		; We're negative, so jump forward to
-	add	HL,BC			; the end so we can continue
-
-doneScrolling:
-	ld	(groundx),HL		; Set groundx to the updated location
-
 	ret
 
 ;
@@ -123,3 +98,38 @@ DrawGroundMap:
 	ldir
 
 	ret
+
+
+
+
+
+;
+;
+;
+UpdateGroundLocation:
+	ld	BC,(groundspeed)	; Update scroll location of ground
+	ld	HL,(groundx)		; according to speed
+	add	HL,BC
+
+	ld	A,H			; Did we pass the left edge?
+	cp	$FF
+	jp	Z,acrossLeftEdge	; Yes, then fixup groundx
+
+	ld	BC,5*128		; Did we pass the right edge?
+	or 	A
+	sbc 	HL,BC
+	add 	HL,BC
+	jp	C,doneScrolling		; Nope - we're done here
+
+acrossRightEdge:
+	ld	BC,5*128		; Passed by the right edge, so backup
+	or	A			; so we can continue scrolling
+	sbc	HL,BC
+	jp	doneScrolling
+
+acrossLeftEdge:
+ 	ld	BC,128*5		; We're negative, so jump forward to
+	add	HL,BC			; the end so we can continue
+
+doneScrolling:
+	ld	(groundx),HL		; Set groundx to the updated location

@@ -2,15 +2,14 @@
 
 shipXdir	DB 0	; 0=Right, 1=Left
 
-shipX		DW 128	; Horizontal postion of ship on screen
+shipX		DW WORLDWIDTH/2	; Horizontal position of ship
 
-rawShipXspeed	DB 0	; Value -127..+127 inc/dec by keys used as index into
+rawShipXspeed	DB 1	; Value -127..+127 inc/dec by keys used as index into
 			; a lookup table to get shipXspeed
 
 shipXspeed	DB 0	; Value to be added to shipXspeedAcc at every frame
 
 shipXspeedAcc	DB 0	; Added to shipX as shifted by >> 3 at every frame
-
 
 shipYdir	DB 1	; 0=Down, 1=Up
 
@@ -61,7 +60,14 @@ DrawShip:
 	add	HL,BC
 	ex	DE,HL		; DE=Screen line starting addresses
 
-	ld	BC,(shipX)	; BC=shipx/8 for byte offset
+	ld	HL,(shipX)	; BC=shipx/8 for byte offset
+	ld	BC,(cameraX)
+	CLC
+	sbc	HL,BC
+	ld	BC,128
+	add	HL,BC
+	ld	B,H
+	ld	C,L
 	srl	B
 	rr	C
 	srl	B
@@ -82,7 +88,10 @@ DrawShip:
 
 	; Calculate the address of the correct ship image according
 	; to the 3 LSB of the shipx variable
+	ld	A,(cameraX)
+	ld	C,A
 	ld	A,(shipX)
+	sub	C
 	and	%00000111
 	add	A,A
 	ld	DE,shipRLUT
@@ -131,12 +140,16 @@ UpdateShipY:
 	ld	A,(shipYdir)		; Stash shipYdir in C for later usage
 	ld	C,A
 
+IFDEF YFRICTION
 	ld	A,(rawShipYspeed)	; Introduce some friction/drag
  	cp	0			; if (speed>0) speed--;
  	jp	Z,noydec
  	dec	A
 noydec	ld 	(rawShipYspeed),A
-	ld	(shipYspeed),A		; TODO - lookuptable
+ENDIF
+
+	ld	A,(rawShipYspeed)	; TODO - lookuptable
+	ld	(shipYspeed),A
 
 	ld	A,(shipYspeed)		; shipYspeedAcc+=shipYspeed
 	ld	B,A
@@ -150,9 +163,9 @@ noydec	ld 	(rawShipYspeed),A
 	srl	A
 	srl	A
 	bit	0,C			; Make value negative if the shipYdir
-	jp	Z,notneg		; is going up
+	jp	Z,notyneg		; is going up
 	neg
-notneg	ld	B,A			; shipY+='integer part of acc'
+notyneg	ld	B,A			; shipY+='integer part of acc'
 	ld	A,(shipY)
 	add	A,B
 
@@ -169,4 +182,52 @@ ydone2	ld	(shipY),A
 	and	%00000111
 	ld	(shipYspeedAcc),A
 noychange:
+	ret
+
+
+;
+;
+;
+UpdateShipX:
+IFDEF XFRICTION
+	ld	A,(rawShipXspeed)	; Introduce some friction/drag
+ 	cp	0			; if (speed>0) speed--;
+ 	jp	Z,noxdec
+ 	dec	A
+noxdec	ld 	(rawShipXspeed),A
+ENDIF
+
+	ld	A,(rawShipXspeed)	; TODO - table loopup
+	ld	(shipXspeed),A
+
+	ld	A,(shipXspeed)
+	ld	B,A
+	ld	A,(shipXspeedAcc)
+	add	A,B
+	ld	(shipXspeedAcc),A
+	and	%11111000		; Is the integer part 0?
+	jp	Z,nochange		; Yes, no need for update of ship
+
+	srl	A			; Shift away the decimal part
+	srl	A
+	srl	A
+	ld	C,A
+	ld	A,0
+	ld	B,A
+	ld	HL,(shipX)
+	ld	A,(shipXdir)
+	bit	0,A			; Make value negative if the shipXdir
+	jp	Z,notxneg		; is going left
+	CLC
+	sbc	HL,BC
+	jp	donex
+
+notxneg	add	HL,BC			; shipX+='integer part of acc'
+donex	ld	(shipX),HL
+
+	ld	A,(shipXspeedAcc)	; Remove used integer part from acc
+	and	%00000111
+	ld	(shipXspeedAcc),A
+
+nochange
 	ret

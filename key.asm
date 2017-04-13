@@ -70,23 +70,22 @@ ReadKeys:
 UpKey:
 	ld	A,1			; Ship is going upwards
 	ld 	(shipYdir),A
-	ld	A,(rawShipYspeed)
-	inc	A
-	cp 	MAXSHIPYSPEED
-	jp	NC,uk1
-	ld	A,MAXSHIPYSPEED
-uk1	ld 	(rawShipYspeed),A
-	jp	morekeys1
+	jp	updownkey
 
 	;
 DownKey:
 	ld	A,0			; Ship is going downwards
 	ld 	(shipYdir),A
-	ld	A,(rawShipYspeed)
+
+updownkey:
+	ld	A,(rawShipYspeed)	; Increment speed, but bracket at max
+	inc	A
 	inc	A
 	cp 	MAXSHIPYSPEED
+	jp	C,udk
 	ld	A,MAXSHIPYSPEED
-dk2	ld 	(rawShipYspeed),A
+udk	ld 	(rawShipYspeed),A
+
 
 	; Now test for LEFT/RIGHT {J/K) keys
 morekeys1
@@ -99,17 +98,35 @@ morekeys1
 	jp	morekeys2
 
 LeftKey:
+	ld	A,(shipXdir)
+	cp	1
+	jp	Z,noLeftChange
+	ld	A,0
+	ld	(rawShipXspeed),A
+noLeftChange
 	ld	A,1
 	ld	(shipXdir),A
-	ld	HL,shipX
-	dec	(HL)
-	jp	morekeys2
+	jp	leftrightkey
 
 RightKey:
+	ld	A,(shipXdir)
+	cp	0
+	jp	Z,noRightChange
+	ld	A,0
+	ld	(rawShipXspeed),A
+noRightChange
 	ld	A,0
 	ld	(shipXdir),A
-	ld	HL,shipX
-	inc	(HL)
+
+leftrightkey:
+	ld	A,(rawShipXspeed)	; Increment speed, but bracket at max
+	inc	A
+	inc	A
+	cp 	MAXSHIPXSPEED
+	jp	C,lrk
+	ld	A,MAXSHIPXSPEED
+lrk	ld 	(rawShipXspeed),A
+
 
 morekeys2:
 	ld	BC,PORTbm
