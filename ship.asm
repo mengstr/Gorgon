@@ -223,7 +223,20 @@ ENDIF
 	jp	donex
 
 notxneg	add	HL,BC			; shipX+='integer part of acc'
-donex	ld	(shipX),HL
+
+donex	ld	A,H			; Wrap at right and left edges
+	cp	5
+	jp	NZ,notpassedrightedge
+	sub	5
+	ld	H,A
+	jp	notpassedleftedge
+notpassedrightedge
+	cp	$FF
+	jp	NZ,notpassedleftedge
+	add	A,5
+	ld	H,A
+notpassedleftedge
+	ld	(shipX),HL
 
 	ld	A,(shipXspeedAcc)	; Remove used integer part from acc
 	and	%00000111

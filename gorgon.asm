@@ -42,7 +42,7 @@ XFRICTION	EQU	1		; Horizontal air-drag
 YFRICTION	EQU	1		; Vertical air-drag
 
 MAXSHIPYSPEED 	EQU	24
-MAXSHIPXSPEED 	EQU	32
+MAXSHIPXSPEED 	EQU	64
 
 WORLDWIDTH	EQU	1280
 LASTLINE	EQU 	191
@@ -98,6 +98,14 @@ Start:
 	call	DrawRemainingShips
 
 Loop:
+	ld HL,(cameraX)
+	ld DE,Row0+0
+	call PrintHLAtDE
+
+	ld HL,(shipX)
+	ld DE,Row0+7
+	call PrintHLAtDE
+
 	call 	ReadKeys
 	call	ScoreDisplayer
 	call	DrawGround
@@ -223,6 +231,129 @@ DrawTopBoxes:
 
 
 
+
+PrintHLAtDE:
+	push DE
+	call Bin2Bcd
+	ld DE,asciibuf
+	call Bcd2HexAscii
+	ld HL,asciibuf
+
+	ld A,(asciibuf+0)
+	add A,16
+	pop HL
+	inc HL
+	push HL
+	dec HL
+	call DispNum
+
+	ld A,(asciibuf+1)
+	add A,16
+	pop HL
+	inc HL
+	push HL
+	dec HL
+	call DispNum
+
+	ld A,(asciibuf+2)
+	add A,16
+	pop HL
+	inc HL
+	push HL
+	dec HL
+	call DispNum
+
+	ld A,(asciibuf+3)
+	add A,16
+	pop HL
+	inc HL
+	push HL
+	dec HL
+	call DispNum
+
+	ld A,(asciibuf+4)
+	add A,16
+	pop HL
+	inc HL
+	push HL
+	dec HL
+	call DispNum
+
+	ld A,(asciibuf+5)
+	add A,16
+	pop HL
+	call DispNum
+
+	ret
+
+asciibuf DS 6
+
+;;--------------------------------------------------
+;; Binary to BCD conversion
+;;
+;; Converts a 16-bit unsigned integer into a 6-digit
+;; BCD number. 1181 Tcycles
+;;
+;; input: HL = unsigned integer to convert
+;; output: C:HL = 6-digit BCD number
+;; destroys: A,F,B,C,D,E,H,L
+;;--------------------------------------------------
+Bin2Bcd:
+	LD BC, 16*256+0 ; handle 16 bits, one bit per iteration
+	LD DE, 0
+cvtLoop:
+	ADD HL, HL
+	LD A, E
+	ADC A, A
+	DAA
+	LD E, A
+	LD A, D
+	ADC A, A
+	DAA
+	LD D, A
+	LD A, C
+	ADC A, A
+	DAA
+	LD C, A
+	DJNZ cvtLoop
+	EX DE,HL
+	RET
+
+;;----------------------------------------------------
+;; Converts a 6-digit BCD number to a hex ASCII string
+;;
+;; input: DE = pointer to start of ASCII string
+;; C:HL number to be converted
+;; output: DE = pointer past end of ASCII string
+;; destroys: A,F,D,E
+;;-----------------------------------------------------
+Bcd2HexAscii:
+	LD A, C
+	CALL cvtUpperNibble
+	LD A, C
+	CALL cvtLowerNibble
+	LD A, H
+	CALL cvtUpperNibble
+	LD A, H
+	CALL cvtLowerNibble
+	LD A, L
+	CALL cvtUpperNibble
+	LD A, L
+	JR cvtLowerNibble
+cvtUpperNibble:
+	RRA ; move upper nibble into lower nibble
+	RRA
+	RRA
+	RRA
+cvtLowerNibble:
+	AND $0F ; isolate lower nibble
+	ADD A,$90 ; old trick
+	DAA ; for converting
+	ADC A,$40 ; one nibble
+	DAA ; to hex ASCII
+	LD (DE), A
+	INC DE
+	RET
 
 
 

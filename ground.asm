@@ -27,6 +27,9 @@ DrawGround:
 	ld	BC,(groundx)
 	ld	BC,(cameraX)
 
+	srl	B
+	rr	C
+
 	ld	A,C
 	and	%00000011
 	srl	B		; The lower two bits is used to select one of
