@@ -101,7 +101,7 @@ LeftKey:
 	ld	A,(shipXdir)
 	cp	1
 	jp	Z,noLeftChange
-	ld	A,0
+	ld	A,RESIDUALSPEED
 	ld	(rawShipXspeed),A
 noLeftChange
 	ld	A,1
@@ -112,7 +112,7 @@ RightKey:
 	ld	A,(shipXdir)
 	cp	0
 	jp	Z,noRightChange
-	ld	A,0
+	ld	A,RESIDUALSPEED
 	ld	(rawShipXspeed),A
 noRightChange
 	ld	A,0

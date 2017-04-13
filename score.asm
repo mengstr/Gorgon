@@ -72,71 +72,71 @@ sdCnt:	DB	13*3		; Point to the last entry to immediatly wrap
 
 DispScore0:
 	ld	A,(Score+0)
-	ld	HL,Row184+6
+	ld	HL,Row184+7
 	jp	DispNum
 
 DispScore1:
 	ld	A,(Score+1)
-	ld	HL,Row184+7
+	ld	HL,Row184+8
 	jp	DispNum
 
 DispScore2:
 	ld	A,(Score+2)
-	ld	HL,Row184+8
+	ld	HL,Row184+9
 	jp	DispNum
 
 DispScore3:
 	ld	A,(Score+3)
-	ld	HL,Row184+9
+	ld	HL,Row184+10
 	jp	DispNum
 
 DispScore4:
 	ld	A,(Score+4)
-	ld	HL,Row184+10
+	ld	HL,Row184+11
 	jp	DispNum
 
 DispHiScore0:
 	ld	A,(HiScore+0)
-	ld	HL,Row184+17
+	ld	HL,Row184+16
 	jp	DispNum
 
 DispHiScore1:
 	ld	A,(HiScore+1)
-	ld	HL,Row184+18
+	ld	HL,Row184+17
 	jp	DispNum
 
 DispHiScore2:
 	ld	A,(HiScore+2)
-	ld	HL,Row184+19
+	ld	HL,Row184+18
 	jp	DispNum
 
 DispHiScore3:
 	ld	A,(HiScore+3)
-	ld	HL,Row184+20
+	ld	HL,Row184+19
 	jp	DispNum
 
 DispHiScore4:
 	ld	A,(HiScore+4)
-	ld	HL,Row184+21
+	ld	HL,Row184+20
 	jp	DispNum
 
 DispFuel0:
 	ld	A,(Fuel+0)
-	ld	HL,Row184+28
+	ld	HL,Row184+27
 	jp	DispNum
 
 DispFuel1:
 	ld	A,(Fuel+1)
-	ld	HL,Row184+29
+	ld	HL,Row184+28
 	jp	DispNum
 
 DispFuel2:
 	ld	A,(Fuel+2)
-	ld	HL,Row184+30
+	ld	HL,Row184+29
 	jp	DispNum
 
 DispFuel3:
 	ld	A,(Fuel+3)
-	ld	HL,Row184+31
+	ld	HL,Row184+30
 	jp	DispNum
 

@@ -37,12 +37,15 @@ WHITE	EQU 7		; WH
 ; Game constants and settings
 ;
 
+;DEBUG		EQU	1
 CPUBORDER	EQU 	1		; 0=Disable, 1=Enable
 XFRICTION	EQU	1		; Horizontal air-drag
 YFRICTION	EQU	1		; Vertical air-drag
 
 MAXSHIPYSPEED 	EQU	24
-MAXSHIPXSPEED 	EQU	64
+MAXSHIPXSPEED 	EQU	31
+
+RESIDUALSPEED	EQU 	12
 
 WORLDWIDTH	EQU	1280
 LASTLINE	EQU 	191
@@ -63,7 +66,7 @@ NEXTGROUNDLINEOFFSET EQU 32*5
 	include "key.asm"
 
 Footer:
-	DB 22,1,0,'SCRE: ..... HISC:..... FUEL:....'
+	DB 22,1,0,'SCORE: ..... HI:..... FUEL:.... '
 Footer_: EQU $
 
 holdL		DB 0
@@ -98,14 +101,6 @@ Start:
 	call	DrawRemainingShips
 
 Loop:
-	ld HL,(cameraX)
-	ld DE,Row0+0
-	call PrintHLAtDE
-
-	ld HL,(shipX)
-	ld DE,Row0+7
-	call PrintHLAtDE
-
 	call 	ReadKeys
 	call	ScoreDisplayer
 	call	DrawGround
@@ -115,6 +110,15 @@ Loop:
 
 	ld	HL,(shipX)
 	ld	(cameraX),HL
+
+IFDEF DEBUG
+	ld HL,(cameraX)
+	ld DE,Row0+0
+	call PrintHLAtDE
+	ld HL,(shipX)
+	ld DE,Row0+7
+	call PrintHLAtDE
+ENDIF
 
  IF CPUBORDER=0
  	halt
@@ -126,9 +130,6 @@ Loop:
 	call	SETBRDR
  ENDIF
 	jp	Loop
-
-
-
 
 
 ;
