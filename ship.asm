@@ -1,6 +1,6 @@
 	include "shipdata.inc"
 
-shipdir		DB 0	; 0=Right, 1=Left
+shipXdir	DB 0	; 0=Right, 1=Left
 
 shipX		DW 128	; Horizontal postion of ship on screen
 
@@ -11,12 +11,15 @@ shipXspeed	DB 0	; Value to be added to shipXspeedAcc at every frame
 
 shipXspeedAcc	DB 0	; Added to shipX as shifted by >> 3 at every frame
 
-shipY		DB 0	; Vertical position of ship
+
+shipYdir	DB 1	; 0=Down, 1=Up
+
+shipY		DB 70	; Vertical position of ship (start in the middle)
 
 rawShipYspeed	DB 0	; Value -127..+127 inc/dec by keys used as index into
 			; a lookup table to get shipYspeed
 
-shipYspeed	DB 4	; Value to be added to shipYspeedAcc at every frame
+shipYspeed	DB 0	; Value to be added to shipYspeedAcc at every frame
 
 shipYspeedAcc	DB 0	; Added to shipY as shifted by >> 3 at every frame
 
@@ -90,7 +93,7 @@ DrawShip:
 	inc	DE
 	ld	A,(DE)
 	ld	H,A
-	ld	A,(shipdir)	; Left/Right sprites are $100 apart
+	ld	A,(shipXdir)	; Left/Right sprites are $100 apart
 	add	A,H
 	ld	H,A
 
@@ -125,6 +128,16 @@ shp##V	ld	SP,$FFFF
 ; Update ship Y counters and position
 ;
 UpdateShipY:
+	ld	A,(shipYdir)		; Stash shipYdir in C for later usage
+	ld	C,A
+
+	ld	A,(rawShipYspeed)	; Introduce some friction/drag
+ 	cp	0			; if (speed>0) speed--;
+ 	jp	Z,noydec
+ 	dec	A
+noydec	ld 	(rawShipYspeed),A
+	ld	(shipYspeed),A		; TODO - lookuptable
+
 	ld	A,(shipYspeed)		; shipYspeedAcc+=shipYspeed
 	ld	B,A
 	ld	A,(shipYspeedAcc)
@@ -136,17 +149,20 @@ UpdateShipY:
 	srl	A			; Shift away the decimal part
 	srl	A
 	srl	A
-	ld	B,A			; shipY+='integer part of acc'
+	bit	0,C			; Make value negative if the shipYdir
+	jp	Z,notneg		; is going up
+	neg
+notneg	ld	B,A			; shipY+='integer part of acc'
 	ld	A,(shipY)
 	add	A,B
 
 	cp	230			; Bound shipY within 0..140
 	jp	C,ydone1
-	ld	A,140	;0
+	ld	A,0
 	jp	ydone2
 ydone1	cp	140
 	jp	C,ydone2
-	ld	A,0 	;140
+	ld	A,140
 ydone2	ld	(shipY),A
 
 	ld	A,(shipYspeedAcc)	; Remove used integer part from acc

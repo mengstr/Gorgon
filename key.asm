@@ -66,18 +66,22 @@ ReadKeys:
 	jp	Z,DownKey
 	jp	morekeys1
 
-	; UP key 'increases' the negative value to max -MAXSHIPYSPEED
+	; UP key
 UpKey:
+	ld	A,1			; Ship is going upwards
+	ld 	(shipYdir),A
 	ld	A,(rawShipYspeed)
-	dec	A
-	cp 	-MAXSHIPYSPEED
+	inc	A
+	cp 	MAXSHIPYSPEED
 	jp	NC,uk1
-	ld	A,-MAXSHIPYSPEED
+	ld	A,MAXSHIPYSPEED
 uk1	ld 	(rawShipYspeed),A
 	jp	morekeys1
 
-	; DOWN key increases the positive value to a max MAXSHIPYSPEED
+	;
 DownKey:
+	ld	A,0			; Ship is going downwards
+	ld 	(shipYdir),A
 	ld	A,(rawShipYspeed)
 	inc	A
 	cp 	MAXSHIPYSPEED
@@ -96,14 +100,14 @@ morekeys1
 
 LeftKey:
 	ld	A,1
-	ld	(shipdir),A
+	ld	(shipXdir),A
 	ld	HL,shipX
 	dec	(HL)
 	jp	morekeys2
 
 RightKey:
 	ld	A,0
-	ld	(shipdir),A
+	ld	(shipXdir),A
 	ld	HL,shipX
 	inc	(HL)
 
