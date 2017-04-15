@@ -36,6 +36,7 @@ WHITE	EQU 7		; WH
 ;
 ; Game constants and settings
 ;
+;OPTSPEED	EQU	1		; Defined=Optimize for Speed
 
 ;SINGLESTEP	EQU	1		; Enabled=J/K only moves single pixel
 DEBUG		EQU	1
