@@ -37,6 +37,7 @@ WHITE	EQU 7		; WH
 ; Game constants and settings
 ;
 
+;SINGLESTEP	EQU	1		; Enabled=J/K only moves single pixel
 DEBUG		EQU	1
 CPUBORDER	EQU 	1		; 0=Disable, 1=Enable
 XFRICTION	EQU	1		; Horizontal air-drag
@@ -46,15 +47,15 @@ SHIPWORLDTOP	EQU	56	; Screen line to offset to when shipY=0
 MAXSHIPYSPEED 	EQU	24
 MAXSHIPXSPEED 	EQU	31
 
+EDGEDISTANCE	EQU	90
 RESIDUALSPEED	EQU 	12	; ShipXspeed when changed direction
 
-WORLDWIDTH	EQU	1280
+WORLDWIDTH	EQU	1024
 
 LASTLINE	EQU 	191
 GROUNDHEIGHT 	EQU	16
 SCOREHEIGHT	EQU 	9
 GROUNDSTART	EQU 	LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
-NEXTGROUNDLINEOFFSET EQU 32*5
 
 
 	include "macros.asm"
@@ -77,7 +78,7 @@ holdH		DB 0
 holdSP		DW 0
 fire		DB 0
 
-cameraX		DW	WORLDWIDTH/2
+cameraX		DW 0
 
 
 Start:
@@ -87,8 +88,8 @@ Start:
 
 	ld	A,WhBK		; Fill the screen attributes
  REPT $400,V
-;	ld	A, (YELLOW*8)+BLUE+(((V & 32) XOR ((V & 1) * 32)) * 2)
-	ld	(ATTRIBS+V),A
+	ld	A, (YELLOW*8)+BLUE+(((V & 32) XOR ((V & 1) * 32)) * 2)
+;	ld	(ATTRIBS+V),A
  ENDM
 
 	ld	A,253
@@ -103,18 +104,27 @@ Start:
 	call	DrawGroundMap
 	call	DrawRemainingShips
 
+	ld	A,WhBK		; Fill the screen attributes
+ REPT $400,V
+;	ld	A, (YELLOW*8)+BLUE+(((V & 32) XOR ((V & 1) * 32)) * 2)
+	ld	(ATTRIBS+V),A
+ ENDM
+
 	ld	HL,(shipX)
 	ld	(cameraX),HL
 
 Loop:
 	call	DrawGround
+	ld	A,YELLOW
+	call	SETBRDR
 	call	DrawShip
+	ld	A,RED
+	call	SETBRDR
 	call 	ReadKeys
 	call	ScoreDisplayer
 	call	UpdateShipY
 	call	UpdateShipX
 
-	jp FollowDone
 	;
 	; If ship is moving to the left then the camera should not move
 	; until ship-camera>100. When this is true then camera=ship-100
@@ -126,17 +136,22 @@ Loop:
 	cp	0
 	jp	NZ,ShipIsGoingRight
 
+ShipIsGoingLeft
 	ld	HL,(shipX)
 	ld	BC,(cameraX)
 	CLC
 	sbc	HL,BC
 	ld	A,L
-	cp	100
+	call	AbsA
+	cp	EDGEDISTANCE
 	jp	C,FollowDone
 	ld	HL,(shipX)
-	ld	BC,100
+	ld	BC,EDGEDISTANCE
 	CLC
 	sbc	HL,BC
+	ld	A,H			; Wrap at 1024
+	and	3			;  ...
+	ld	H,A			;  ...
 	ld	(cameraX),HL
 	jp	FollowDone
 
@@ -146,11 +161,15 @@ ShipIsGoingRight:
 	CLC
 	sbc	HL,BC
 	ld	A,L
-	cp	100
+	call	AbsA
+	cp	EDGEDISTANCE-24
 	jp	C,FollowDone
 	ld	HL,(shipX)
-	ld	BC,100
+	ld	BC,EDGEDISTANCE-24
 	add	HL,BC
+	ld	A,H			; Wrap at 1024
+	and	3			;  ...
+	ld	H,A			;  ...
 	ld	(cameraX),HL
 	jp	FollowDone
 
@@ -176,6 +195,11 @@ ENDIF
  ENDIF
 	jp	Loop
 
+AbsA:
+ 	bit	7,A
+	ret 	Z
+	neg
+	ret
 
 ;
 ; Displays a number 0..9 from A as location starting at HL

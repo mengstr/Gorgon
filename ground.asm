@@ -1,6 +1,8 @@
 	include "grounddata.inc"
 	include "groundmapdata.inc"
 
+NEXTGROUNDLINEOFFSET EQU 1024/8
+
 ;
 ;
 ;
