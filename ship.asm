@@ -95,16 +95,22 @@ shp##V	ld	SP,$FFFF
 
 	; Draw the six lines of the selected ship at
 	; the six addresses pushed to the stack earlier
-  REPT	6,V
-	ld	BC,4
+ REPT	6,V
 	pop	DE
 	ld	A,E
 	inc	A
 	ld	(shp##V + 1),A
 	ld	A,D
 	ld	(shp##V + 2),A
+  IFDEF OPTSPEED
+   REPT 4
+  	ldd
+   ENDM
+  ELSE
+	ld	BC,4
 	lddr
-  ENDM
+  ENDIF
+ ENDM
 
   ret
 
