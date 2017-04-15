@@ -42,17 +42,20 @@ CPUBORDER	EQU 	1		; 0=Disable, 1=Enable
 XFRICTION	EQU	1		; Horizontal air-drag
 YFRICTION	EQU	1		; Vertical air-drag
 
+SHIPWORLDTOP	EQU	56	; Screen line to offset to when shipY=0
 MAXSHIPYSPEED 	EQU	24
 MAXSHIPXSPEED 	EQU	31
 
-RESIDUALSPEED	EQU 	12
+RESIDUALSPEED	EQU 	12	; ShipXspeed when changed direction
 
 WORLDWIDTH	EQU	1280
+
 LASTLINE	EQU 	191
 GROUNDHEIGHT 	EQU	16
 SCOREHEIGHT	EQU 	9
 GROUNDSTART	EQU 	LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
 NEXTGROUNDLINEOFFSET EQU 32*5
+
 
 	include "macros.asm"
 
@@ -111,6 +114,7 @@ Loop:
 	call	UpdateShipY
 	call	UpdateShipX
 
+	jp FollowDone
 	;
 	; If ship is moving to the left then the camera should not move
 	; until ship-camera>100. When this is true then camera=ship-100

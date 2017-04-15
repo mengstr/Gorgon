@@ -22,30 +22,6 @@ shipYspeed	DB 0	; Value to be added to shipYspeedAcc at every frame
 
 shipYspeedAcc	DB 0	; Added to shipY as shifted by >> 3 at every frame
 
-
-;
-;  Used for displaying the number of remanining lives
-;
-DRAW1SHIPLINE MACRO
-	ld	A,(BC)
-	ld	(HL),A
-	inc	HL
-	inc	BC
-	ld	A,(BC)
-	ld	(HL),A
-	inc	HL
-	inc	BC
-	ld	A,(BC)
-	ld	(HL),A
-	inc	HL
-	inc	BC
-	ld	A,(BC)
-	ld	(HL),A
-	inc	HL
-	inc	BC
-ENDM
-
-
 ;
 ;
 ;
@@ -55,7 +31,7 @@ DrawShip:
 	ld	BC,0
 	ld	A,(shipY)
 	ld	C,A
-	ld	HL,RowLookup+56	; Offset down into the playfield
+	ld	HL,RowLookup+SHIPWORLDTOP ; Offset down into the playfield
 	add	HL,BC
 	add	HL,BC
 	ex	DE,HL		; DE=Screen line starting addresses
@@ -115,7 +91,7 @@ shp##V	ld	SP,$FFFF
 	push	BC
 	push	BC
   ENDM
-	ld	SP,(holdSP)		; Restore the SP after eraser
+	ld	SP,(holdSP)		; Restore the SP after erasing
 
 	; Draw the six lines of the selected ship at
 	; the six addresses pushed to the stack earlier
@@ -244,3 +220,26 @@ notpassedleftedge
 
 nochange
 	ret
+
+
+;
+;  Used for displaying the number of remanining lives
+;
+DRAW1SHIPLINE MACRO
+	ld	A,(BC)
+	ld	(HL),A
+	inc	HL
+	inc	BC
+	ld	A,(BC)
+	ld	(HL),A
+	inc	HL
+	inc	BC
+	ld	A,(BC)
+	ld	(HL),A
+	inc	HL
+	inc	BC
+	ld	A,(BC)
+	ld	(HL),A
+	inc	HL
+	inc	BC
+ENDM
