@@ -36,6 +36,7 @@ WHITE	EQU 7		; WH
 ;
 ; Game constants and settings
 ;
+;OPTSPEED	EQU	1		; Defined=Optimize for Speed
 
 DEBUG		EQU	1
 CPUBORDER	EQU 	1		; 0=Disable, 1=Enable
