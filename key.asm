@@ -97,6 +97,28 @@ morekeys1
 	jp	Z,RightKey
 	jp	morekeys2
 
+IFDEF SINGLESTEP
+
+LeftKey:
+	ld	HL,shipX
+	dec	(HL)
+	ld	A,1
+	ld	(shipXdir),A
+	jp	waitrelease
+RightKey:
+	ld	HL,shipX
+	inc	(HL)
+	ld	A,0
+	ld	(shipXdir),A
+waitrelease:
+	ld	BC,PORThl
+	in	A,(C)
+	and	%00011111
+	cp	%00011111
+	jp	NZ,waitrelease
+	jp	morekeys2
+
+ELSE
 LeftKey:
 	ld	A,(shipXdir)
 	cp	1
@@ -126,6 +148,7 @@ leftrightkey:
 	jp	C,lrk
 	ld	A,MAXSHIPXSPEED
 lrk	ld 	(rawShipXspeed),A
+ENDIF
 
 
 morekeys2:

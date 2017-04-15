@@ -2,7 +2,7 @@
 
 shipXdir	DB 0	; 0=Right, 1=Left
 
-shipX		DW WORLDWIDTH/2	; Horizontal position of ship
+shipX		DW WORLDWIDTH/2-128 ; Horizontal position of ship
 
 rawShipXspeed	DB 1	; Value -127..+127 inc/dec by keys used as index into
 			; a lookup table to get shipXspeed
@@ -42,6 +42,9 @@ DrawShip:
 	sbc	HL,BC
 	ld	BC,128
 	add	HL,BC
+	ld	A,H			; Wrap at 1024
+	and	3			;  ...
+	ld	H,A			;  ...
 	ld	B,H
 	ld	C,L
 	srl	B
@@ -207,17 +210,8 @@ ENDIF
 notxneg	add	HL,BC			; shipX+='integer part of acc'
 
 donex	ld	A,H			; Wrap at right and left edges
-	cp	5
-	jp	NZ,notpassedrightedge
-	sub	5
+	and	3
 	ld	H,A
-	jp	notpassedleftedge
-notpassedrightedge
-	cp	$FF
-	jp	NZ,notpassedleftedge
-	add	A,5
-	ld	H,A
-notpassedleftedge
 	ld	(shipX),HL
 
 	ld	A,(shipXspeedAcc)	; Remove used integer part from acc
