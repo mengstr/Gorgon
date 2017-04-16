@@ -2,6 +2,7 @@ TARGET  = gorgon
 
 PASMO	= pasmo6
 PASMOFLAGS = --tapbas --listing gorgon.lst
+ZX7 = zx7/zx7
 
 EMU	= fuse
 #EMUFLAGS= --late-timings --graphics-filter advmame2x --no-confirm-action
@@ -22,7 +23,7 @@ INCLUDES = \
 
 .PHONY : all run assets clean fullclean
 
-all : clean $(TARGET).tap run
+all : clean $(ZX7) $(TARGET).tap run
 
 $(TARGET).tap : gorgon.asm $(INCLUDES)
 	@echo "[assembling to .tap"]
@@ -46,7 +47,6 @@ shipdata.inc : assets/shipR.txt assets/shipL.txt
 	@echo " IF shipL0 - shipR0 != 256" >> $@
 	@echo "   .ERROR ShipL0 and shipR0 must be $100 bytes apart" >> $@
 	@echo " ENDIF" >> $@
-	
 
 colors.inc :
 	@echo "[creating colors]"
@@ -61,10 +61,14 @@ groundmapdata.inc :
 	@echo "[creating groundmap]"
 	@createGround/makemap.sh assets/groundmapdata.txt GroundMap > $@
 
+$(ZX7) :
+	@$(MAKE) --no-print-directory -C zx7 all
+
 fullclean : clean
 	@rm -f *.inc
+	@$(MAKE) --no-print-directory -C zx7 clean
 
 clean :
 	@rm -rf *.tap *.tmp *.bin *.lst
 	@rm -f *~ */*~
-	
+
