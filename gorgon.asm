@@ -10,14 +10,12 @@
 CLRSCR	EQU 3503 	; $0D6B
 OPENCHN	EQU $1601 	; 5633
 print	EQU $203C
-SETBRDR	EQU $229B 	; 8859 Routine to set border color with A
-LASTK	EQU $5C08 	; 23560 Location holding the last pressed key
-DF_SZ	EQU 23659
-DF_CC	EQU 23684 	; Address of next character location for print
 SCREEN	EQU $4000
 ATTRIBS EQU $5800	; 5800..5B00=$400 locs. FL BL P2 P1 P0 I2 I1 I0
 SLOWRAM	EQU $5DC0 	; 24000 First usable location in slow ram
 FASTRAM	EQU $8000 	; 32768 Start of the faster upper 32K ram
+
+PORTBORDER EQU $FE	; OUT port for seting border color
 
 ;
 ; Color names
@@ -36,13 +34,13 @@ WHITE	EQU 7		; WH
 ;
 ; Game constants and settings
 ;
-;OPTSPEED	EQU	1		; Defined=Optimize for Speed
+;OPTSPEED	EQU	1	; Defined=Optimize for Speed
+;SINGLESTEP	EQU	1	; Defined=J/K only moves single pixel
+DEBUG		EQU	1	; Defined=Print debug values at top
+CPUBORDER	EQU 	1	; 0=Disable, 1=Enable
 
-;SINGLESTEP	EQU	1		; Enabled=J/K only moves single pixel
-DEBUG		EQU	1
-CPUBORDER	EQU 	1		; 0=Disable, 1=Enable
-XFRICTION	EQU	1		; Horizontal air-drag
-YFRICTION	EQU	1		; Vertical air-drag
+XFRICTION	EQU	1	; Horizontal air-drag
+YFRICTION	EQU	1	; Vertical air-drag
 
 SHIPWORLDTOP	EQU	56	; Screen line to offset to when shipY=0
 MAXSHIPYSPEED 	EQU	24
@@ -85,7 +83,7 @@ cameraX		DW 0
 Start:
 	call	CLRSCR 		; clear the screen.
 	ld	A,BLACK
-	call	SETBRDR
+	out	(PORTBORDER),A
 
 	ld	A,WhBK		; Fill the screen attributes
  REPT $400,V
@@ -117,20 +115,20 @@ Start:
 Loop:
 	call	DrawGround
 	ld	A,YELLOW
-	call	SETBRDR
+	out	(PORTBORDER),A
 	call	DrawShip
 	ld	A,RED
-	call	SETBRDR
+	out	(PORTBORDER),A
 	call 	ReadKeys
 	call	ScoreDisplayer
 	call	UpdateShipY
 	call	UpdateShipX
 
 	;
-	; If ship is moving to the left then the camera should not move
+	; If ship is moving to the right then the camera should not move
 	; until ship-camera>100. When this is true then camera=ship-100
 	;
-	; If ship is moving to the right then the camera should not move
+	; If ship is moving to the left then the camera should not move
 	; until camera-ship>100. When this is true then camera=ship+100
 	;
 	ld 	A,(shipXdir)
@@ -189,10 +187,10 @@ ENDIF
  	halt
  ELSE
 	ld	A,BLACK
-	call	SETBRDR
+	out	(PORTBORDER),A
 	halt
 	ld	A,BLUE
-	call	SETBRDR
+	out	(PORTBORDER),A
  ENDIF
 	jp	Loop
 
