@@ -85,12 +85,6 @@ Start:
 	ld	A,BLACK
 	out	(PORTBORDER),A
 
-	ld	A,WhBK		; Fill the screen attributes
- REPT $400,V
-	ld	A, (YELLOW*8)+BLUE+(((V & 32) XOR ((V & 1) * 32)) * 2)
-;	ld	(ATTRIBS+V),A
- ENDM
-
 	ld	A,253
 	call	OPENCHN
 
@@ -227,45 +221,45 @@ dn0	ld	A,(DE)		; Copy all 8 rows of the character map
 ;
 DrawRemainingShips:
 	ld	BC,shipR4
-	ld	HL,Row2+26
+	ld	HL,Row2+27
 	DRAW1SHIPLINE
-	ld	HL,Row3+26
+	ld	HL,Row3+27
 	DRAW1SHIPLINE
-	ld	HL,Row4+26
+	ld	HL,Row4+27
 	DRAW1SHIPLINE
-	ld	HL,Row5+26
+	ld	HL,Row5+27
 	DRAW1SHIPLINE
-	ld	HL,Row6+26
+	ld	HL,Row6+27
 	DRAW1SHIPLINE
-	ld	HL,Row7+26
-	DRAW1SHIPLINE
-
-	ld	BC,shipR4
-	ld	HL,Row10+26
-	DRAW1SHIPLINE
-	ld	HL,Row11+26
-	DRAW1SHIPLINE
-	ld	HL,Row12+26
-	DRAW1SHIPLINE
-	ld	HL,Row13+26
-	DRAW1SHIPLINE
-	ld	HL,Row14+26
-	DRAW1SHIPLINE
-	ld	HL,Row15+26
+	ld	HL,Row7+27
 	DRAW1SHIPLINE
 
 	ld	BC,shipR4
-	ld	HL,Row18+26
+	ld	HL,Row10+27
 	DRAW1SHIPLINE
-	ld	HL,Row19+26
+	ld	HL,Row11+27
 	DRAW1SHIPLINE
-	ld	HL,Row20+26
+	ld	HL,Row12+27
 	DRAW1SHIPLINE
-	ld	HL,Row21+26
+	ld	HL,Row13+27
 	DRAW1SHIPLINE
-	ld	HL,Row22+26
+	ld	HL,Row14+27
 	DRAW1SHIPLINE
-	ld	HL,Row23+26
+	ld	HL,Row15+27
+	DRAW1SHIPLINE
+
+	ld	BC,shipR4
+	ld	HL,Row18+27
+	DRAW1SHIPLINE
+	ld	HL,Row19+27
+	DRAW1SHIPLINE
+	ld	HL,Row20+27
+	DRAW1SHIPLINE
+	ld	HL,Row21+27
+	DRAW1SHIPLINE
+	ld	HL,Row22+27
+	DRAW1SHIPLINE
+	ld	HL,Row23+27
 	DRAW1SHIPLINE
 
 	ret
@@ -273,8 +267,8 @@ DrawRemainingShips:
 	;
 	; Draw boxes for screen overview & lives
 	;
-Box1	DB $00,$00,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$00,$00,$00,$00,$FF,$FF,$FF,$FF,$00,$00
-Box2	DB $00,$00,$80,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$80,$00,$00,$01,$00,$00
+Box1	DB $01,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$80,$00,$FF,$FF,$FF,$FF,$00
+Box2	DB $01,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$80,$00,$80,$00,$00,$01,$00
 
 DrawTopBoxes:
 	ld	DE,Row0
