@@ -36,7 +36,7 @@ WHITE	EQU 7		; WH
 ;
 ;OPTSPEED	EQU	1	; Defined=Optimize for Speed
 ;SINGLESTEP	EQU	1	; Defined=J/K only moves single pixel
-DEBUG		EQU	1	; Defined=Print debug values at top
+;DEBUG		EQU	1	; Defined=Print debug values at top
 CPUBORDER	EQU 	1	; 0=Disable, 1=Enable
 
 XFRICTION	EQU	1	; Horizontal air-drag
@@ -46,7 +46,7 @@ SHIPWORLDTOP	EQU	56	; Screen line to offset to when shipY=0
 MAXSHIPYSPEED 	EQU	24
 MAXSHIPXSPEED 	EQU	31
 
-EDGEDISTANCE	EQU	90
+EDGEDISTANCE	EQU	80
 RESIDUALSPEED	EQU 	12	; ShipXspeed when changed direction
 
 WORLDWIDTH	EQU	1024
@@ -56,17 +56,17 @@ GROUNDHEIGHT 	EQU	16
 SCOREHEIGHT	EQU 	9
 GROUNDSTART	EQU 	LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
 
-
 	include "macros.asm"
 
 	ORG SLOWRAM
-	ALIGN	256
+	ALIGN 256
 	include "fatfont.asm"
 	include "ytable.asm"
 	include "score.asm"
 	include "ground.asm"
 	include "ship.asm"
 	include "key.asm"
+	include "interrupt.asm"
 
 Footer:
 	DB 22,1,0,'SCORE: ..... HI:..... FUEL:.... '
@@ -98,6 +98,7 @@ Start:
 	ld	BC,Footer_ - Footer ; length of string to print
 	call	8252 		; print our string
 
+	call	SetupIM2
 	call	ResetScores
 	call	DrawTopBoxes
 	call	DrawGroundMap
@@ -423,7 +424,5 @@ cvtLowerNibble:
 	LD (DE), A
 	INC DE
 	RET
-
-
 
 	 END Start

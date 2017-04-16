@@ -19,7 +19,8 @@ INCLUDES = \
 	shipdata.inc \
 	grounddata.inc \
 	groundmapdata.inc \
-	colors.inc
+	colors.inc \
+	interrupt.asm 
 
 .PHONY : all run assets clean fullclean
 
@@ -54,8 +55,8 @@ colors.inc :
 
 grounddata.inc :
 	@echo "[creating ground]"
-	@createGround/process.sh assets/groundTest.txt > $@
-#	@createGround/process.sh assets/grounddata.txt > $@
+#	@createGround/process.sh assets/groundTest.txt > $@
+	@createGround/process.sh assets/grounddata.txt > $@
 
 groundmapdata.inc :
 	@echo "[creating groundmap]"
