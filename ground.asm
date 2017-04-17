@@ -55,51 +55,19 @@ gofs4
 	add	HL,BC		; Add byte-offset to the address of the
 				; selected ground table
 
-	DRAW1GROUNDLINEAT Row166
-	DRAW1GROUNDLINEAT Row167
-	DRAW1GROUNDLINEAT Row168
-	DRAW1GROUNDLINEAT Row169
-	DRAW1GROUNDLINEAT Row170
-	DRAW1GROUNDLINEAT Row171
-	DRAW1GROUNDLINEAT Row172
-	DRAW1GROUNDLINEAT Row173
-	DRAW1GROUNDLINEAT Row174
-	DRAW1GROUNDLINEAT Row175
-	DRAW1GROUNDLINEAT Row176
-	DRAW1GROUNDLINEAT Row177
-	DRAW1GROUNDLINEAT Row178
-	DRAW1GROUNDLINEAT Row179
-
+ IRP V,<166,167,168,169,170,171,172,173,174,175,176,177,178,179>
+	DRAW1GROUNDLINEAT Row##V
+ ENDM
 	ret
 
 ;
 ; Draw the small ground data into the overview map on top of screen
 ;
 DrawGroundMap:
-	ld	DE,Row19+2
 	ld	HL,GroundMap0
-	ld	BC,20
+ IRP V,<19,20,21,22,23,24>
+	ld	DE,1+Row##V
+	ld	BC,24
 	ldir
-	ld	DE,Row20+2
-	ld	HL,GroundMap1
-	ld	BC,20
-	ldir
-	ld	DE,Row21+2
-	ld	HL,GroundMap2
-	ld	BC,20
-	ldir
-	ld	DE,Row22+2
-	ld	HL,GroundMap3
-	ld	BC,20
-	ldir
-	ld	DE,Row23+2
-	ld	HL,GroundMap4
-	ld	BC,20
-	ldir
-	ld	DE,Row24+2
-	ld	HL,GroundMap5
-	ld	BC,20
-	ldir
-
+ ENDM
 	ret
-
