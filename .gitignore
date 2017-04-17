@@ -13,6 +13,8 @@ tmp/
 Makefile.tmp
 *.lst
 *.inc
-*.tap
 *.tmp
 
+# Executables and results
+*.tap
+zx7
