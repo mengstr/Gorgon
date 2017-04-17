@@ -1,5 +1,8 @@
 	include "shipdata.inc"
 
+SHIPRIGHT	EQU	0
+SHIPLEFT	EQU	1
+
 shipXdir	DB 0	; 0=Right, 1=Left
 
 shipX		DW WORLDWIDTH/2-128 ; Horizontal position of ship

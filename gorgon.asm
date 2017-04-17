@@ -36,7 +36,7 @@ WHITE	EQU 7		; WH
 ;
 ;OPTSPEED	EQU	1	; Defined=Optimize for Speed
 ;SINGLESTEP	EQU	1	; Defined=J/K only moves single pixel
-;DEBUG		EQU	1	; Defined=Print debug values at top
+DEBUG		EQU	1	; Defined=Print debug values at top
 CPUBORDER	EQU 	1	; 0=Disable, 1=Enable
 
 XFRICTION	EQU	1	; Horizontal air-drag
@@ -46,7 +46,7 @@ SHIPWORLDTOP	EQU	56	; Screen line to offset to when shipY=0
 MAXSHIPYSPEED 	EQU	24
 MAXSHIPXSPEED 	EQU	31
 
-EDGEDISTANCE	EQU	80
+EDGEDISTANCE	EQU	60
 RESIDUALSPEED	EQU 	12	; ShipXspeed when changed direction
 
 WORLDWIDTH	EQU	1024
@@ -94,6 +94,7 @@ Start:
 
 	call	SetupIM2
 	call	ResetScores
+
 	call	DrawTopBoxes
 	call	DrawGroundMap
 	call	DrawRemainingShips
@@ -127,22 +128,24 @@ Loop:
 	; until camera-ship>100. When this is true then camera=ship+100
 	;
 	ld 	A,(shipXdir)
-	cp	0
-	jp	NZ,ShipIsGoingRight
+	cp	SHIPRIGHT
+	jp	Z,ShipIsGoingRight
 
 ShipIsGoingLeft
-	ld	HL,(shipX)
-	ld	BC,(cameraX)
+	ld	HL,(cameraX)
+	ld	BC,(shipX)
 	CLC
 	sbc	HL,BC
+	ld	A,H			; Wrap at 1024
+	and	3			;  ...
+	jp	NZ,FollowDone		; Negative or >256 distance, we're done
+	ld	H,A			;  ...
 	ld	A,L
-	call	AbsA
 	cp	EDGEDISTANCE
 	jp	C,FollowDone
 	ld	HL,(shipX)
 	ld	BC,EDGEDISTANCE
-	CLC
-	sbc	HL,BC
+	add	HL,BC
 	ld	A,H			; Wrap at 1024
 	and	3			;  ...
 	ld	H,A			;  ...
@@ -150,17 +153,21 @@ ShipIsGoingLeft
 	jp	FollowDone
 
 ShipIsGoingRight:
-	ld	HL,(cameraX)
-	ld	BC,(shipX)
+	ld	HL,(shipX)
+	ld	BC,(cameraX)
 	CLC
 	sbc	HL,BC
+	ld	A,H			; Wrap at 1024
+	and	3			;  ...
+	jp	NZ,FollowDone		; Negative or >256 distance, we're done
+	ld	H,A			;  ...
 	ld	A,L
-	call	AbsA
-	cp	EDGEDISTANCE-24
+	cp	EDGEDISTANCE+24
 	jp	C,FollowDone
 	ld	HL,(shipX)
-	ld	BC,EDGEDISTANCE-24
-	add	HL,BC
+	ld	BC,EDGEDISTANCE+24
+	CLC
+	sbc	HL,BC
 	ld	A,H			; Wrap at 1024
 	and	3			;  ...
 	ld	H,A			;  ...

@@ -102,13 +102,13 @@ IFDEF SINGLESTEP
 LeftKey:
 	ld	HL,shipX
 	dec	(HL)
-	ld	A,1
+	ld	A,SHIPLEFT
 	ld	(shipXdir),A
 	jp	waitrelease
 RightKey:
 	ld	HL,shipX
 	inc	(HL)
-	ld	A,0
+	ld	A,SHIPRIGHT
 	ld	(shipXdir),A
 waitrelease:
 	ld	BC,PORThl
@@ -121,23 +121,23 @@ waitrelease:
 ELSE
 LeftKey:
 	ld	A,(shipXdir)
-	cp	1
+	cp	SHIPLEFT
 	jp	Z,noLeftChange
 	ld	A,RESIDUALSPEED
 	ld	(rawShipXspeed),A
 noLeftChange
-	ld	A,1
+	ld	A,SHIPLEFT
 	ld	(shipXdir),A
 	jp	leftrightkey
 
 RightKey:
 	ld	A,(shipXdir)
-	cp	0
+	cp	SHIPRIGHT
 	jp	Z,noRightChange
 	ld	A,RESIDUALSPEED
 	ld	(rawShipXspeed),A
 noRightChange
-	ld	A,0
+	ld	A,SHIPRIGHT
 	ld	(shipXdir),A
 
 leftrightkey:
