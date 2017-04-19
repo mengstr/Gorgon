@@ -246,11 +246,3 @@ DRAW1SHIPLINE MACRO
 	inc	HL
 	inc	BC
 ENDM
-
-;
-;
-;
-LookupDivideBy42
-REPT 128,V
-	DB	(V*500)/(332)
-ENDM

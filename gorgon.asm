@@ -36,7 +36,7 @@ WHITE	EQU 7		; WH
 ;
 ;OPTSPEED	EQU	1	; Defined=Optimize for Speed
 ;SINGLESTEP	EQU	1	; Defined=J/K only moves single pixel
-DEBUG		EQU	1	; Defined=Print debug values at top
+;DEBUG		EQU	1	; Defined=Print debug values at top
 CPUBORDER	EQU 	1	; 0=Disable, 1=Enable
 
 XFRICTION	EQU	1	; Horizontal air-drag
@@ -108,6 +108,10 @@ Start:
 	ld	HL,(shipX)
 	ld	(cameraX),HL
 
+	call 	DrawShipAtMap	; Pre-draw this outside of the loop so the
+				; first time inside the loop will erase the
+				; marker
+
 Loop:
 	call	DrawGround
 	ld	A,YELLOW
@@ -116,9 +120,13 @@ Loop:
 	ld	A,RED
 	out	(PORTBORDER),A
 	call 	ReadKeys
-	call	ScoreDisplayer
-	call	UpdateShipY
+	call	ScoreDisplayer		; Display 1 digit of the score digits
+	call 	DrawShipAtMap		; Erase the ship at the map
+	call	UpdateShipY		; Update ship positions
 	call	UpdateShipX
+	call 	DrawShipAtMap		; Redraw the ship at the map
+	ld	A,GREEN
+	out	(PORTBORDER),A
 
 	;
 	; If ship is moving to the right then the camera should not move

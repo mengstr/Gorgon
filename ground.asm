@@ -1,5 +1,8 @@
 	include "grounddata.inc"
 	include "groundmapdata.inc"
+	ALIGN 128
+	include "mapXscaler.inc"
+	include "mapYscaler.inc"
 
 NEXTGROUNDLINEOFFSET EQU 1024/8
 
@@ -71,3 +74,74 @@ DrawGroundMap:
 	ldir
  ENDM
 	ret
+
+
+;
+;
+;
+DrawShipAtMap:
+	ld	A,(shipY)	;       0..140
+	srl	A		; A/=2  0..70
+	add	A,A		; Two-bytes lookup table
+	ld	HL,LookupMapYscaler
+	add	A,L
+	ld	L,A
+	ld	E,(HL)		; DE=Row address in the map for shipY
+	inc	HL		;.
+	ld	D,(HL)		;.
+
+	ld	HL,(shipX)	;        0..1024
+	srl	H		; HL/=8  0..128
+	rr	L		;.
+	srl	H		;.
+	rr	L		;.
+	srl	H		;.
+	rr	L		;.
+	ld	BC,LookupMapXscaler
+	add	HL,BC
+	ld	A,(HL)		; A now holds 0..191
+	push	AF		; Keep A for the bits within the byte
+	srl	A		; /8          0..23
+	srl	A		;...
+	srl	A		;...
+
+	ex	DE,HL		; HL now is the address
+
+	add	A,L		; Add the X-offset
+	ld	L,A
+
+	pop	AF
+	and	%00000111
+	add	a,a
+	push	HL
+	ld	HL,DoublePixel
+	add	A,L
+	ld	L,A
+	ld	A,(HL)
+	ld	B,A
+	inc	HL
+	ld	A,(HL)
+	ld	C,A
+	pop	HL
+
+	ld	A,(HL)		; Paint a blob there
+	xor	C
+	ld	(HL),A
+	inc	HL
+	ld	A,(HL)		; Paint a blob there
+	xor	B
+	ld	(HL),A
+
+	ret
+
+
+ ALIGN 16
+DoublePixel:
+	DW %1100000000000000
+	DW %0110000000000000
+	DW %0011000000000000
+	DW %0001100000000000
+	DW %0000110000000000
+	DW %0000011000000000
+	DW %0000001100000000
+	DW %0000000110000000
