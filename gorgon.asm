@@ -60,7 +60,7 @@ GROUNDSTART	EQU 	LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
 
 	ORG SLOWRAM
 	ALIGN 256
-	include "fatfont.asm"
+	include "fatfont.inc"
 	include "ytable.asm"
 	include "score.asm"
 	include "ground.asm"
@@ -217,7 +217,7 @@ DispNum:
 	add	A,A 		; Multiply A by 8
 	add	A,A
 	add	A,A
-	ld	DE,FATFONT+$10*8 ; Address of digit 0 in charmap
+	ld	DE,FatFont+$10*8 ; Address of digit 0 in charmap
 	add	A,E		; Add A*8 to the address to get to the
 	ld	E,A 		; correct offset of the requred digit
 
