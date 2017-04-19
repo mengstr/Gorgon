@@ -50,6 +50,11 @@ KEYx	EQU 2		; PORTvz
 KEYz	EQU 1		; PORTvz
 KEYcap	EQU 0		; PORTvz
 
+;
+;
+;
+
+firePressed	DB	0	; Used for not have fire-autorepeat
 
 ;
 ; Read and handle keyboard presses
@@ -156,12 +161,17 @@ morekeys2:
 	in	A,(C)
 	bit	KEYspa,A
 	jp	Z,FireKey
+	ld	A,0
+	ld 	(firePressed),A
 	jp	noMoreKeys
 
-	; Currently the  fire key just sets a variable to $FF
 FireKey:
-	ld	A,$FF
-	ld 	(fire),A
+	ld	A,(firePressed)
+	cp	0
+	jp	NZ, noMoreKeys
+	inc	A
+	ld 	(firePressed),A
+	call	Fire
 	jp	noMoreKeys
 
 noMoreKeys

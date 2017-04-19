@@ -1,5 +1,7 @@
 	include "shipdata.inc"
 
+shipScreenPos	DW	0
+
 SHIPRIGHT	EQU	0
 SHIPLEFT	EQU	1
 
@@ -67,6 +69,7 @@ DrawShip:
 	add	HL,BC
 	push	HL
   ENDM
+	ld 	(shipScreenPos),HL
 
 	; Calculate the address of the correct ship image according
 	; to the 3 LSB of the shipx variable

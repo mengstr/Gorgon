@@ -65,6 +65,7 @@ GROUNDSTART	EQU 	LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
 	include "score.asm"
 	include "ground.asm"
 	include "ship.asm"
+	include "fire.asm"
 	include "key.asm"
 	include "interrupt.asm"
 
@@ -127,6 +128,7 @@ Loop:
 	call 	DrawShipAtMap		; Redraw the ship at the map
 	ld	A,GREEN
 	out	(PORTBORDER),A
+	call	UpdateShots
 
 	;
 	; If ship is moving to the right then the camera should not move
