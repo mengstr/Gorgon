@@ -58,6 +58,7 @@ GROUNDSTART	EQU 	LASTLINE-SCOREHEIGHT-GROUNDHEIGHT
 
 	include "macros.asm"
 
+
 	ORG SLOWRAM
 	ALIGN 256
 	include "fatfont.inc"
